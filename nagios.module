@@ -53,12 +53,12 @@ function nagios_settings() {
 function nagios_get_data() {
   $status = array();
 
-  $status['status'] = 'unknown';
+  $status['DRUPAL'] = 'UNKNOWN';
 
   $ua = variable_get('nagios_ua', 'Nagios');
   if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
     // This is not an authorized user agent, so do not send information out
-    $status['status'] = 'unauthorized';
+    $status['DRUPAL'] = 'unauthorized';
   }
   else {
     if (variable_get('nagios_updates', 0)) {
@@ -69,19 +69,19 @@ function nagios_get_data() {
       $requirements = module_invoke_all('requirements', 'runtime');
       switch(drupal_requirements_severity($requirements)) {
         case REQUIREMENT_OK:
-          $status['status'] = 'ok';
+          $status['DRUPAL'] = 'OK';
           break;
         case REQUIREMENT_INFO:
-          $status['status'] = 'info';
+          $status['DRUPAL'] = 'INFO';
           break;
         case REQUIREMENT_WARNING:
-          $status['status'] = 'warning';
+          $status['DRUPAL'] = 'WARNING';
           break;
         case REQUIREMENT_ERROR:
-          $status['status'] = 'error';
+          $status['DRUPAL'] = 'ERROR';
           break;
         default:
-          $status['status'] = 'unknown';
+          $status['DRUPAL'] = 'UNKNOWN';
           break;
       }
     }
@@ -91,7 +91,7 @@ function nagios_get_data() {
     // Include number of active nodes in the report
     $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
     if (!$count) {
-      $status['status'] = 'error, no nodes';
+      $status['DRUPAL'] = 'ERROR, no nodes';
     }
     else {
       $status['nodes'] = $count;
@@ -100,7 +100,7 @@ function nagios_get_data() {
     // Include number of active users in the report
     $count = db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
     if ($count < 2) {
-      $status['status'] = 'error, less than 2 users';
+      $status['DRUPAL'] = 'ERROR, less than 2 users';
     }
     else {
       $status['users'] = $count;
@@ -117,10 +117,13 @@ function nagios_status_page() {
   header("Pragma: no-cache");
   header("Expires: 0");
 
-  $output = 'nagios=';
+  $output = "\n";
+
+  $output .= 'nagios=';
   foreach(nagios_get_data() as $key => $value) {
     $output .= $key . ':' . $value . ', ';
   }
+  $output .= "\n";
 
   // Print the output, so we test the theme
   print theme('page', $output);

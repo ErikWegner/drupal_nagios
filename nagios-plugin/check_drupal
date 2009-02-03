@@ -20,7 +20,7 @@ REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 . $PROGPATH/utils.sh
 
 print_usage() {
-    $ECHO "Usage: $PROGNAME -u user_agent_string [ -p path_to_nagios_status_page ]"
+    $ECHO "Usage: $PROGNAME -u user_agent_string [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]"
     $ECHO "Usage: $PROGNAME --help"
     $ECHO "Usage: $PROGNAME --version"
 }

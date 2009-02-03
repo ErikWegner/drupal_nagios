@@ -102,6 +102,7 @@ submit them in the issue queue on drupal.org.
 * Would be nice if modules can override the 'status' element in the array as well.
 * Instead of using Nagios built in check_http, it would be more beneficial if we have our custom Drupal
   plugin for Nagios that returns OK, WARNING or CRITICAL, and not just check for a string, or absence thereof.
+* Implement a full SNMP MIB for Drupal
 
 Bugs/Features/Patches:
 ----------------------

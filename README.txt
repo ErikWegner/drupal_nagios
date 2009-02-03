@@ -102,17 +102,24 @@ Here is an explanation of some of the options:
   This parameter is required.
   It is a unique identifier that is send as the user agent from the Nagios check_drupal script,
   and has to match what the Drupal Nagios module has configured.  Both sides have to match,
-  otherwise, you will get "unauthorized" errors.
+  otherwise, you will get "unauthorized" errors. The best way is to generate an MD5 or SHA1
+  string from a combination of data, such as date, city, company name, ...etc. For example:
+
+  $ echo "2003-Jan-17 Waterloo, Canada Honda" | md5sum
+
+  The resulting hash is hard enough to deduce.
 
 -T 2
   This parameter is optional.
   This means that if the Drupal site does not respond in 2 seconds, an error will be reported
   by Nagios. Increase this value if you site is really slow.
+  The default is 2 seconds.
 
 -p nagios
   This parameter is optional.
   For a normal site where Drupal is installed in the web server's DocumentRoot, leave this unchanged.
   If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
+  The default is the path nagios.
 
 To Do / Wishlist
 ----------------

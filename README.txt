@@ -103,6 +103,7 @@ submit them in the issue queue on drupal.org.
 * Instead of using Nagios built in check_http, it would be more beneficial if we have our custom Drupal
   plugin for Nagios that returns OK, WARNING or CRITICAL, and not just check for a string, or absence thereof.
 * Implement a full SNMP MIB for Drupal
+* Integrate average page execution time and average page memory from devel/performance into Nagios
 
 Bugs/Features/Patches:
 ----------------------

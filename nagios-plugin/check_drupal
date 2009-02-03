@@ -1,12 +1,15 @@
-#! /bin/bash
+#!/bin/bash
 #
-# Drupal monitoring for Nagios
-# Written by Khalid Baheyeldin http://2bits.com
+# $Id$
+# Copyright 2009 Khalid Baheyeldin http://2bits.com
 #
-# Usage: ./check_drupal -u user_agent string [ -p path_to_nagios_status_page ]
+# Drupal monitoring script for Nagios
 #
-# Paths to commands used in this script.  These may have to be modified to match
-# your system setup.
+# Needs the nagios module enabled on the Drupal site(s) that you want monitored.
+#
+# Usage: ./check_drupal -u user_agent string [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]
+#
+# Paths to commands used in this script.
 
 ECHO="/bin/echo"
 GREP="/bin/egrep"

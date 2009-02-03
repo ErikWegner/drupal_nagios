@@ -60,37 +60,59 @@ To enable this module do the following:
 Configuration for Nagios
 ------------------------
 
-For each Drupal site that you want to monitor, you should add one entry in Nagios.
+The exact way to configure Nagios depends on several factors, e.g. how many Drupal
+sites you want to monitor, the way Nagios is setup, ...etc.
 
-An entry for a site will look like so:
+The following way is just one of many ways to configure Nagios for Drupal. There are
+certainly other ways to do it, but it all centers on using the check_drupal command
+being run for each site.
 
-    define service{
-      use                 generic-service  ; Inherit default values from a template
-      host_name           drupal-host-name
-      service_description Drupal
-      check_command       check_http!-u /nagios -A "Drupal" -t 2 -M 5 -s "nagios=status:ok"
-    }
+1. Copy the check_drupal script in the nagios-plugin directory to your Nagios plugins
+   directory (e.g. /usr/lib/nagions/plugins).
+
+2. Change the commands.cfg file for Nagios to include the following:
+
+   define command{
+     command_name  check_drupal
+     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTNAME$ -u $ARG1$ -T $ARG2$
+   }
+
+3. Create a hostgroup for the hosts that run Drupal and need to be monitored.
+   This is normally in a hostgroups.cfg file.
+   
+   define hostgroup {
+     hostgroup_name  drupal-servers
+     alias           Drupal servers
+     members         yoursite.example.com, mysite.example.com 
+   }
+
+4. Defined a service that will run for this host group
+
+   define service{
+     hostgroup_name         drupal-servers
+     service_description    DRUPAL
+     check_command          check_drupal!-u "unique_id" -T 2 
+     use                    generic-service
+     notification_interval  0 ; set > 0 if you want to be renotified
+   }
 
 Here is an explanation of some of the options:
 
--A "Drupal"
-  This is the user agent that Nagios will use when accessing your site. You should change this
-  to the unique string that is unique for your installation, and set Drupal's settings accordingly.
+-u "unique_id"
+  This parameter is required.
+  It is a unique identifier that is send as the user agent from the Nagios check_drupal script,
+  and has to match what the Drupal Nagios module has configured.  Both sides have to match,
+  otherwise, you will get "unauthorized" errors.
 
--t 2
+-T 2
+  This parameter is optional.
   This means that if the Drupal site does not respond in 2 seconds, an error will be reported
-  by Nagios. Increase this if you site is really slow.
+  by Nagios. Increase this value if you site is really slow.
 
--M 5
-  This means that the response from Drupal should be fresh and no more than 5 seconds ago. This
-  will help determine if the site has stopped generating the status page.
-
--u /nagios
-  For a normal site, leave this unchanged. If you installed Drupal in a subdirectory, then change
-  /nagios to /sub_directory/nagios
-
--s "nagios=status:ok"
-  This is the reponse to look for on success. Do not change this part.
+-p nagios
+  This parameter is optional.
+  For a normal site where Drupal is installed in the web server's DocumentRoot, leave this unchanged.
+  If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
 
 To Do / Wishlist
 ----------------
@@ -99,7 +121,7 @@ The following features are nice to have. If you can provide working and tested p
 submit them in the issue queue on drupal.org.
 
 * The nagios_get_data() function can provide a hook so modules can provide their own data into Nagios.
-* Would be nice if modules can override the 'status' element in the array as well.
+* Would be nice if modules can override the 'DRUPAL' element in the array as well.
 * Instead of using Nagios built in check_http, it would be more beneficial if we have our custom Drupal
   plugin for Nagios that returns OK, WARNING or CRITICAL, and not just check for a string, or absence thereof.
 * Implement a full SNMP MIB for Drupal

@@ -37,7 +37,7 @@ function nagios_settings() {
     '#description'   => t('Show if there are pending module updates in Nagios status.')
   );
 
-  $form['nagios_users'] = array(
+  $form['nagios_ua'] = array(
     '#type'          => 'textfield',
     '#title'         => t('User Agent'),
     '#default_value' => variable_get('nagios_ua', 'Nagios'),

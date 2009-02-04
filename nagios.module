@@ -117,7 +117,7 @@ function nagios_get_data() {
   $cron_last = variable_get('cron_last', 0);
   $mins = variable_get('nagios_cron_duration', 60);
   if (time() > ($cron_last + $mins)) {
-    $status['DRUPAL'] = "ERROR, cron has not been running for more than $min minutes";
+    $status['DRUPAL'] = "ERROR, cron has not been running for more than $mins minutes";
   }
 
   return $status;

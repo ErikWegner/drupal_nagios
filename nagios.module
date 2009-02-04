@@ -37,6 +37,13 @@ function nagios_settings() {
     '#description'   => t('Show if there are pending module updates in Nagios status.')
   );
 
+  $form['nagios_cron_duration'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Cron duration'),
+    '#default_value' => variable_get('nagios_cron_duration', 60*60),
+    '#description'   => t('Issue a critical alert when cron has not been running for this duration. Default is one hour.')
+  );
+
   $form['nagios_ua'] = array(
     '#type'          => 'textfield',
     '#title'         => t('User Agent'),
@@ -75,10 +82,10 @@ function nagios_get_data() {
           $status['DRUPAL'] = 'INFO';
           break;
         case REQUIREMENT_WARNING:
-          $status['DRUPAL'] = 'WARNING';
+          $status['DRUPAL'] = 'WARNING, admin followup required';
           break;
         case REQUIREMENT_ERROR:
-          $status['DRUPAL'] = 'ERROR';
+          $status['DRUPAL'] = 'ERROR, admin attention required';
           break;
         default:
           $status['DRUPAL'] = 'UNKNOWN';
@@ -107,6 +114,10 @@ function nagios_get_data() {
     }
   }
 
+  $cron_last = variable_get('cron_last', 0);
+  if (time() > ($cron_last + variable_get('nagios_cron_duration', 60*60))) {
+    $status['DRUPAL'] = 'ERROR, cron has not been running for more than an hour';
+  }
   return $status;
 }
 

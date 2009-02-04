@@ -107,8 +107,8 @@ function nagios_get_data() {
 
   // Include number of active users in the report
   $count = db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
-  if ($count < 2) {
-    $status['DRUPAL'] = 'ERROR, less than 2 users';
+  if ($count < 1) {
+    $status['DRUPAL'] = 'ERROR, No active users';
   }
   else {
     $status['users'] = $count;

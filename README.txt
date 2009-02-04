@@ -17,6 +17,7 @@ The module reports to Nagios that the site is up and running normally, including
   * pending Drupal module updates
   * unwritable 'files' directory
   * Pending updates to the database schema
+  * Cron not running for a specified period
 
 If you already use Nagios in your organization to monitor your infrastructure, then
 this module will be useful for you. If you only run one or two Drupal sites, Nagios

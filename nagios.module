@@ -40,8 +40,8 @@ function nagios_settings() {
   $form['nagios_cron_duration'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Cron duration'),
-    '#default_value' => variable_get('nagios_cron_duration', 60*60),
-    '#description'   => t('Issue a critical alert when cron has not been running for this duration. Default is one hour.')
+    '#default_value' => variable_get('nagios_cron_duration', 60),
+    '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
   );
 
   $form['nagios_ua'] = array(
@@ -65,59 +65,61 @@ function nagios_get_data() {
   $ua = variable_get('nagios_ua', 'Nagios');
   if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
     // This is not an authorized user agent, so do not send information out
-    $status['DRUPAL'] = 'unauthorized';
+    $status['DRUPAL'] = 'UNKNOWN, unauthorized';
+    return $status;
+  }
+
+  if (variable_get('nagios_updates', 0)) {
+    // Load .install files
+    include_once './includes/install.inc';
+    drupal_load_updates();
+    // Check run-time requirements and status information.
+    $requirements = module_invoke_all('requirements', 'runtime');
+    switch(drupal_requirements_severity($requirements)) {
+      case REQUIREMENT_OK:
+        $status['DRUPAL'] = 'OK';
+        break;
+      case REQUIREMENT_INFO:
+        $status['DRUPAL'] = 'INFO';
+        break;
+      case REQUIREMENT_WARNING:
+        $status['DRUPAL'] = 'WARNING, admin followup required';
+        break;
+      case REQUIREMENT_ERROR:
+        $status['DRUPAL'] = 'ERROR, admin attention required';
+        break;
+      default:
+        $status['DRUPAL'] = 'UNKNOWN';
+        break;
+    }
+  }
+
+  // These queries give some site statistics, and also serve to ensure the database is up
+  //
+  // Include number of active nodes in the report
+  $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
+  if (!$count) {
+    $status['DRUPAL'] = 'ERROR, no nodes';
   }
   else {
-    if (variable_get('nagios_updates', 0)) {
-      // Load .install files
-      include_once './includes/install.inc';
-      drupal_load_updates();
-      // Check run-time requirements and status information.
-      $requirements = module_invoke_all('requirements', 'runtime');
-      switch(drupal_requirements_severity($requirements)) {
-        case REQUIREMENT_OK:
-          $status['DRUPAL'] = 'OK';
-          break;
-        case REQUIREMENT_INFO:
-          $status['DRUPAL'] = 'INFO';
-          break;
-        case REQUIREMENT_WARNING:
-          $status['DRUPAL'] = 'WARNING, admin followup required';
-          break;
-        case REQUIREMENT_ERROR:
-          $status['DRUPAL'] = 'ERROR, admin attention required';
-          break;
-        default:
-          $status['DRUPAL'] = 'UNKNOWN';
-          break;
-      }
-    }
+    $status['nodes'] = $count;
+  }
 
-    // These queries give some site statistics, and also serve to ensure the database is up
-    //
-    // Include number of active nodes in the report
-    $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
-    if (!$count) {
-      $status['DRUPAL'] = 'ERROR, no nodes';
-    }
-    else {
-      $status['nodes'] = $count;
-    }
-
-    // Include number of active users in the report
-    $count = db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
-    if ($count < 2) {
-      $status['DRUPAL'] = 'ERROR, less than 2 users';
-    }
-    else {
-      $status['users'] = $count;
-    }
+  // Include number of active users in the report
+  $count = db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
+  if ($count < 2) {
+    $status['DRUPAL'] = 'ERROR, less than 2 users';
+  }
+  else {
+    $status['users'] = $count;
   }
 
   $cron_last = variable_get('cron_last', 0);
-  if (time() > ($cron_last + variable_get('nagios_cron_duration', 60*60))) {
-    $status['DRUPAL'] = 'ERROR, cron has not been running for more than an hour';
+  $mins = variable_get('nagios_cron_duration', 60);
+  if (time() > ($cron_last + $mins)) {
+    $status['DRUPAL'] = "ERROR, cron has not been running for more than $min minutes";
   }
+
   return $status;
 }
 

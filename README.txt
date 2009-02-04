@@ -122,19 +122,6 @@ Here is an explanation of some of the options:
   If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
   The default is the path nagios.
 
-To Do / Wishlist
-----------------
-
-The following features are nice to have. If you can provide working and tested patches, please
-submit them in the issue queue on drupal.org.
-
-* The nagios_get_data() function can provide a hook so modules can provide their own data into Nagios.
-* Would be nice if modules can override the 'DRUPAL' element in the array as well.
-* Instead of using Nagios built in check_http, it would be more beneficial if we have our custom Drupal
-  plugin for Nagios that returns OK, WARNING or CRITICAL, and not just check for a string, or absence thereof.
-* Implement a full SNMP MIB for Drupal
-* Integrate average page execution time and average page memory from devel/performance into Nagios
-
 Bugs/Features/Patches:
 ----------------------
 If you want to report bugs, feature requests, or submit a patch, please do so

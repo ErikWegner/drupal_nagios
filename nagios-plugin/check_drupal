@@ -115,20 +115,22 @@ fi
 
 temp=/tmp/$PROGNAME.$$
 
-CMD="$WGET -T $timeout -O $temp -U $useragent http://$hostname/$path"
+CMD="$WGET -S -T $timeout -O - -U $useragent http://$hostname/$path"
 
 #echo $CMD >> $DEBUG
 
-$CMD 2> /dev/null
+$CMD > $temp 2>&1
 RC=$?
 
+HTTP=`$GREP "HTTP/" $temp`
+
 if [ "$RC" != 0 ]; then
-  $ECHO "wget error: $RC: when accessing $hostname/$path"
+  $ECHO "wget error: $RC: when accessing $hostname/$path. HTTP: $HTTP"
   $RM -f $temp
-  exit $STATE_UNKNOWN
+  exit $STATE_CRITICAL
 fi
 
-DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'`"
+DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'` - $HTTP"
 
 STATUS=`$ECHO $DATA | awk -F, '{print $1}' | sed -e 's/DRUPAL://'`
 

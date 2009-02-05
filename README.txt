@@ -69,13 +69,13 @@ certainly other ways to do it, but it all centers on using the check_drupal comm
 being run for each site.
 
 1. Copy the check_drupal script in the nagios-plugin directory to your Nagios plugins
-   directory (e.g. /usr/lib/nagions/plugins).
+   directory (e.g. /usr/lib/nagios/plugins).
 
 2. Change the commands.cfg file for Nagios to include the following:
 
    define command{
      command_name  check_drupal
-     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTNAME$ -u $ARG1$ -T $ARG2$
+     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -u $ARG1$ -T $ARG2$
    }
 
 3. Create a hostgroup for the hosts that run Drupal and need to be monitored.

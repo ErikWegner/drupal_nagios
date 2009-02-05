@@ -1,16 +1,11 @@
 #!/bin/bash
 #
-# $Id$
+# Drupal monitoring plugin for Nagios
+#
+# Requires a Drupal module from http://drupal.org/project/nagios
+#
 # Copyright 2009 Khalid Baheyeldin http://2bits.com
 #
-# Drupal monitoring script for Nagios
-#
-# Needs the nagios module enabled on the Drupal site(s) that you want monitored.
-#
-# Usage: ./check_drupal -u user_agent string [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]
-#
-# Paths to commands used in this script.
-
 ECHO="/bin/echo"
 GREP="/bin/egrep"
 RM="/bin/rm"
@@ -23,84 +18,84 @@ REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 . $PROGPATH/utils.sh
 
 print_usage() {
-    $ECHO "Usage: $PROGNAME -u user_agent_string [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]"
-    $ECHO "Usage: $PROGNAME --help"
-    $ECHO "Usage: $PROGNAME --version"
+  $ECHO "Usage: $PROGNAME -u user_agent_string [ -H host_name ] [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]"
+  $ECHO "Usage: $PROGNAME --help"
+  $ECHO "Usage: $PROGNAME --version"
 }
 
 print_help() {
-    print_revision $PROGNAME $REVISION
-    $ECHO ""
-    print_usage
-    $ECHO ""
-    $ECHO "Drupal monitoring plugin for Nagios"
-    $ECHO ""
-    support
+  print_revision $PROGNAME $REVISION
+  $ECHO ""
+  print_usage
+  $ECHO ""
+  $ECHO "Drupal monitoring plugin for Nagios"
+  $ECHO ""
+  support
 }
+
+
+# Debugging stuff, do not enable unless you need to
+#
+#DEBUG=/tmp/nagios.tmp
+#> $DEBUG
+# echo "args: $*" >> $DEBUG
 
 # Make sure the correct number of command line
 # arguments have been supplied
-
-#DEBUG=/tmp/nagios.tmp
-#> $DEBUG
-
-#echo "args: $*" >> $DEBUG
-
 if [ $# -lt 1 ]; then
-    print_usage
-    exit $STATE_UNKNOWN
+  print_usage
+  exit $STATE_UNKNOWN
 fi
 
 # Grab the command line arguments
 
-exitstatus=$STATE_WARNING #default
+exitstatus=$STATE_WARNING
 
 while test -n "$1"; do
-    case "$1" in
-        --help)
-            print_help
-            exit $STATE_OK
+  case "$1" in
+    --help)
+      print_help
+      exit $STATE_OK
+      ;;
+    -h)
+      print_help
+      exit $STATE_OK
+      ;;
+    --version)
+      print_revision $PROGNAME $REVISION
+      exit $STATE_OK
+      ;;
+    -V)
+      print_revision $PROGNAME $REVISION
+      exit $STATE_OK
+      ;;
+    -H)
+      hostname=$2
+      shift
+      ;;
+    -u)
+      useragent=$2
+      shift
+      ;;
+    -p)
+      path=$2
+      shift
+      ;;
+    -T) 
+      timeout=$2
+      shift
             ;;
-        -h)
-            print_help
-            exit $STATE_OK
-            ;;
-        --version)
-            print_revision $PROGNAME $REVISION
-            exit $STATE_OK
-            ;;
-        -V)
-            print_revision $PROGNAME $REVISION
-            exit $STATE_OK
-            ;;
-        -H)
-            hostname=$2
-            shift
-            ;;
-        -u)
-            useragent=$2
-            shift
-            ;;
-        -p)
-            path=$2
-            shift
-            ;;
-        -T) 
-            timeout=$2
-            shift
-            ;;
-        *)
-            $ECHO "Unknown argument: $1"
-            print_usage
-            exit $STATE_UNKNOWN
-            ;;
-    esac
-    shift
+    *)
+      $ECHO "Unknown argument: $1"
+      print_usage
+      exit $STATE_UNKNOWN
+  esac
+  shift
 done
 
 # Set a default for hostname
 if [ "$hostname" = "" ]; then
-  hostname=$NAGIOS_HOSTNAME
+  hostname=$NAGIOS_HOSTADDRESS
 fi
 
 # Set a default for path

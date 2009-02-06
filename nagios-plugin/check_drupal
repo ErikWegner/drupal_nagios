@@ -18,7 +18,7 @@ REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 . $PROGPATH/utils.sh
 
 print_usage() {
-  $ECHO "Usage: $PROGNAME -u user_agent_string [ -H host_name ] [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]"
+  $ECHO "Usage: $PROGNAME -u unique_id [ -H host_name ] [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]"
   $ECHO "Usage: $PROGNAME --help"
   $ECHO "Usage: $PROGNAME --version"
 }
@@ -74,7 +74,7 @@ while test -n "$1"; do
       shift
       ;;
     -u)
-      useragent=$2
+      unique_id=$2
       shift
       ;;
     -p)
@@ -109,13 +109,13 @@ if [ "$timeout" = "" ]; then
 fi
 
 # Set the default for timeout
-if [ "$useragent" = "" ]; then
-  useragent="Nagios"
+if [ "$unique_id" = "" ]; then
+  unique_id="Nagios"
 fi
 
 temp=/tmp/$PROGNAME.$$
 
-CMD="$WGET -S -T $timeout -O - -U $useragent http://$hostname/$path"
+CMD="$WGET -S -T $timeout -O - -U $unique_id http://$hostname/$path"
 
 #echo $CMD >> $DEBUG
 
@@ -126,6 +126,13 @@ HTTP=`$GREP "HTTP/" $temp`
 
 if [ "$RC" != 0 ]; then
   $ECHO "wget error: $RC: when accessing $hostname/$path. HTTP: $HTTP"
+  $RM -f $temp
+  exit $STATE_CRITICAL
+fi
+
+HTTP_CODE=`$ECHO $HTTP | awk '{print $2}'`
+if [ "$HTTP" != "200" ]; then
+  $ECHO "HTTP returned an error code. HTTP: $HTTP"
   $RM -f $temp
   exit $STATE_CRITICAL
 fi

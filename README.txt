@@ -32,9 +32,9 @@ This module exposes the following information from your web site:
 - Whether an action requiring the administrator's attention (e.g pending module updates,
   unreadable 'files' directory, ...etc.)
 
-To mitigate the security risks involve, make sure you use a unique user agent string.
-However, this is not a fool proof solution. If you are concerned about this information
-being publicly accessible, then don't use this module.
+To mitigate the security risks involve, make sure you use a unique ID. However, this is
+not a fool proof solution. If you are concerned about this information being publicly
+accessible, then don't use this module.
 
 Installation
 ------------
@@ -54,7 +54,8 @@ To enable this module do the following:
    Enable the module.
 
 2. Go to Admin -> Settings -> Nagios monitoring.
-   Enter a unique user agent string.
+   Enter a unique ID. This must match what you configure Nagios for.
+   See below for more details.
 
    Don't forget to configure Nagios accordingly. See below.
 
@@ -108,7 +109,11 @@ Here is an explanation of some of the options:
 
   $ echo "2003-Jan-17 Waterloo, Canada Honda" | md5sum
 
-  The resulting hash is hard enough to deduce.
+  The result will be something like this:
+
+  645666c39f06514528987278c4071d85  -
+
+  The resulting hash is hard enough to deduce, and gives a first level protection against snooping.
 
 -T 2
   This parameter is optional.

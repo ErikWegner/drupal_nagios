@@ -46,9 +46,9 @@ function nagios_settings() {
 
   $form['nagios_ua'] = array(
     '#type'          => 'textfield',
-    '#title'         => t('User Agent'),
+    '#title'         => t('Unique ID'),
     '#default_value' => variable_get('nagios_ua', 'Nagios'),
-    '#description'   => t('Restrict sending information to this User Agent string. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes nagios data less accessible to curious users.')
+    '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
   );
 
   return system_settings_form($form);
@@ -64,7 +64,7 @@ function nagios_get_data() {
 
   $ua = variable_get('nagios_ua', 'Nagios');
   if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
-    // This is not an authorized user agent, so do not send information out
+    // This is not an authorized unique id, so do not send information out
     $status['DRUPAL'] = 'UNKNOWN, unauthorized';
     return $status;
   }

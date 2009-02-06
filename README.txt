@@ -134,10 +134,13 @@ This module provides an API for other modules to report status back to Nagios.
 Your module should implement a hook_nagios() function like the one below, and return
 an associative array that looks like this:
 
-'IDENTIFIER' => array(
-  'status' => STATUS_CODE,
-  'text'   => 'Text description for the problem',
-)
+array(
+  'key'  => 'IDENTIFIER', 
+  'data' => array(
+    'status' => STATUS_CODE,
+    'text'   => 'Text description for the problem',
+  ),
+);
 
 STATUS_CODE must be one of the following, defined in nagios.module:
 
@@ -149,25 +152,27 @@ STATUS_CODE must be one of the following, defined in nagios.module:
 Here is an example:
 
 function yourmodule_nagios() {
-  $status = array();
-  $id = 'IDENTIFIER'; // This identifier will appear on Nagios' monitoring pages and alerts.
+  $data = array();
 
   // Check something ...
   $count = ...
   if (!$count) {
-    $status[$id] = array(
+    $data = array(
       'status' => NAGIOS_STATUS_WARNING,
       'text'   => t('A very brief description of the warning'),
     );
   }
   else {
-    $status[$id] = array(
+    $data = array(
       'status' => NAGIOS_STATUS_OK,
       'text'   => '',
     );
   }
 
-  return $status;
+  return array(
+    'key' => 'IDENTIFIER', // This identifier will appear on Nagios' monitoring pages and alerts.
+    'data' => $data,
+  );
 }
 
 

@@ -122,14 +122,14 @@ if [ "$RC" != 0 ]; then
   exit $STATE_CRITICAL
 fi
 
-HTTP_CODE=`$ECHO $HTTP | awk '{print $2}'`
+HTTP_CODE=`$ECHO "$HTTP" | awk '{print $2}'`
 if [ "$HTTP_CODE" != "200" ]; then
   $ECHO "HTTP returned an error code. HTTP: $HTTP"
   $RM -f $temp
   exit $STATE_CRITICAL
 fi
 
-DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'` - $HTTP"
+DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'`"
 
 STATUS=`$ECHO $DATA | awk -F, '{print $1}' | sed -e 's/DRUPAL://'`
 

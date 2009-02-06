@@ -33,13 +33,6 @@ print_help() {
   support
 }
 
-
-# Debugging stuff, do not enable unless you need to
-#
-#DEBUG=/tmp/nagios.tmp
-#> $DEBUG
-# echo "args: $*" >> $DEBUG
-
 # Make sure the correct number of command line
 # arguments have been supplied
 if [ $# -lt 1 ]; then
@@ -117,8 +110,6 @@ temp=/tmp/$PROGNAME.$$
 
 CMD="$WGET -S -T $timeout -O - -U $unique_id http://$hostname/$path"
 
-#echo $CMD >> $DEBUG
-
 $CMD > $temp 2>&1
 RC=$?
 
@@ -143,9 +134,6 @@ STATUS=`$ECHO $DATA | awk -F, '{print $1}' | sed -e 's/DRUPAL://'`
 
 case $STATUS in
 "OK")
-  exitstatus=$STATE_OK
-  ;;
-"INFO")
   exitstatus=$STATE_OK
   ;;
 "WARNING")

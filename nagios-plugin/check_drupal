@@ -18,7 +18,7 @@ REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 . $PROGPATH/utils.sh
 
 print_usage() {
-  $ECHO "Usage: $PROGNAME -u unique_id [ -H host_name ] [ -p path_to_nagios_status_page ] [ -T time_out_seconds ]"
+  $ECHO "Usage: $PROGNAME -U unique_id [ -H host_name ] [ -P path_to_nagios_status_page ] [ -t time_out_seconds ]"
   $ECHO "Usage: $PROGNAME --help"
   $ECHO "Usage: $PROGNAME --version"
 }
@@ -66,15 +66,15 @@ while test -n "$1"; do
       hostname=$2
       shift
       ;;
-    -u)
+    -U)
       unique_id=$2
       shift
       ;;
-    -p)
+    -P)
       path=$2
       shift
       ;;
-    -T) 
+    -t) 
       timeout=$2
       shift
             ;;

@@ -93,14 +93,14 @@ being run for each site.
    define service{
      hostgroup_name         drupal-servers
      service_description    DRUPAL
-     check_command          check_drupal!-u "unique_id" -T 2 
+     check_command          check_drupal!-U "unique_id" -t 2 
      use                    generic-service
      notification_interval  0 ; set > 0 if you want to be renotified
    }
 
 Here is an explanation of some of the options:
 
--u "unique_id"
+-U "unique_id"
   This parameter is required.
   It is a unique identifier that is send as the user agent from the Nagios check_drupal script,
   and has to match what the Drupal Nagios module has configured.  Both sides have to match,
@@ -115,13 +115,13 @@ Here is an explanation of some of the options:
 
   The resulting hash is hard enough to deduce, and gives a first level protection against snooping.
 
--T 2
+-t 2
   This parameter is optional.
   This means that if the Drupal site does not respond in 2 seconds, an error will be reported
   by Nagios. Increase this value if you site is really slow.
   The default is 2 seconds.
 
--p nagios
+-P nagios
   This parameter is optional.
   For a normal site where Drupal is installed in the web server's DocumentRoot, leave this unchanged.
   If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios

@@ -132,7 +132,7 @@ function nagios_nagios() {
     return array(
       'DRUPAL' => array(
         'status' => NAGIOS_STATUS_UNKNOWN,
-        'text'   => 'unauthorized',
+        'text'   => t('Unauthorized'),
       ),
     );
   }
@@ -172,19 +172,19 @@ function nagios_check_requirements() {
     case REQUIREMENT_WARNING:
       $status[$id] = array(
         'status' => NAGIOS_STATUS_WARNING, 
-        'text'   => 'admin followup required',
+        'text'   => t('admin followup required'),
       );
       break;
     case REQUIREMENT_ERROR:
       $status[$id] = array(
         'status' => NAGIOS_STATUS_CRITICAL, 
-        'text'   => 'admin attention required',
+        'text'   => t('admin attention required'),
       );
       break;
     default:
       $status[$id] = array(
         'status' => NAGIOS_STATUS_UNKNOWN, 
-        'text'   => "severity is $severity",
+        'text'   => t('severity is @severity',array('@severity' => $severity)),
       );
       break;
   }
@@ -202,7 +202,7 @@ function nagios_check_cron() {
   if (time() > ($cron_last + $mins*60)) {
     $status[$id] = array(
       'status' => NAGIOS_STATUS_CRITICAL,
-      'text'   => "cron has not been running for more than $mins minutes",
+      'text'   => t('cron has not been running for more than @mins minutes', array('@mins' => $mins)),
     );
   }
   else {
@@ -223,7 +223,7 @@ function nagios_check_nodes() {
   if (!$count) {
     $status[$id] = array(
       'status' => NAGIOS_STATUS_WARNING,
-      'text'   => 'No nodes',
+      'text'   => t('No nodes'),
     );
   }
   else {
@@ -245,7 +245,7 @@ function nagios_check_users() {
   if ($count < 1) {
     $status[$id] = array(
       'status' => NAGIOS_STATUS_WARNING,
-      'text'   => 'No active users',
+      'text'   => t('No active users'),
     );
   }
   else {

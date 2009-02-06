@@ -127,6 +127,50 @@ Here is an explanation of some of the options:
   If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
   The default is the path nagios.
 
+API
+---
+
+This module provides an API for other modules to report status back to Nagios.
+Your module should implement a hook_nagios() function like the one below, and return
+an associative array that looks like this:
+
+'IDENTIFIER' => array(
+  'status' => STATUS_CODE,
+  'text'   => 'Text description for the problem',
+)
+
+STATUS_CODE must be one of the following, defined in nagios.module:
+
+  NAGIOS_STATUS_OK 
+  NAGIOS_STATUS_UNKNOWN 
+  NAGIOS_STATUS_WARNING
+  NAGIOS_STATUS_CRITICAL
+
+Here is an example:
+
+function yourmodule_nagios() {
+  $status = array();
+  $id = 'IDENTIFIER'; // This identifier will appear on Nagios' monitoring pages and alerts.
+
+  // Check something ...
+  $count = ...
+  if (!$count) {
+    $status[$id] = array(
+      'status' => NAGIOS_STATUS_WARNING,
+      'text'   => t('A very brief description of the warning'),
+    );
+  }
+  else {
+    $status[$id] = array(
+      'status' => NAGIOS_STATUS_OK,
+      'text'   => '',
+    );
+  }
+
+  return $status;
+}
+
+
 Bugs/Features/Patches:
 ----------------------
 If you want to report bugs, feature requests, or submit a patch, please do so

@@ -131,7 +131,7 @@ fi
 
 DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'`"
 
-STATUS=`$ECHO $DATA | awk -F, '{print $1}' | sed -e 's/DRUPAL://'`
+STATUS=`$ECHO $DATA | awk -F, '{print $1}'`
 
 case $STATUS in
 "OK")
@@ -152,7 +152,7 @@ case $STATUS in
 esac
 
 # Send the data
-$ECHO "$DATA"
+$ECHO "DRUPAL $DATA"
 
 $RM -f $temp
 

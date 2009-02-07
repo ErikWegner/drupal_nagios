@@ -258,9 +258,22 @@ function nagios_check_requirements() {
   // Load .install files
   include_once './includes/install.inc';
   drupal_load_updates();
-  // Check run-time requirements and status information.
-  $requirements = module_invoke_all('requirements', 'runtime');
-  $severity = drupal_requirements_severity($requirements);
+
+  // Get the run-time requirements and status information.
+  $reqs = module_invoke_all('requirements', 'runtime');
+
+  // Check the requirements as to the most severe status
+  $severity = REQUIREMENT_OK;
+  foreach ($reqs as $key => $requirement) {
+    if (isset($requirement['severity'])) {
+      if ($requirement['severity'] > $severity) {
+        $severity = $requirement['severity'];
+        $desc = $requirement['title'];
+      }
+    }
+  }
+
+  // Create a status to pass back, and a text description too
   switch($severity) {
     case REQUIREMENT_OK:
     case REQUIREMENT_INFO:
@@ -272,13 +285,13 @@ function nagios_check_requirements() {
     case REQUIREMENT_WARNING:
       $data = array(
         'status' => NAGIOS_STATUS_WARNING, 
-        'text'   => t('admin followup required'),
+        'text'   => t('followup recommended - @desc', array('@desc' => $desc)),
       );
       break;
     case REQUIREMENT_ERROR:
       $data = array(
         'status' => NAGIOS_STATUS_CRITICAL, 
-        'text'   => t('admin attention required'),
+        'text'   => t('attention required - @desc', array('@desc' => $desc)),
       );
       break;
     default:
@@ -290,7 +303,7 @@ function nagios_check_requirements() {
   }
 
   return array(
-    'key' => 'REQS',
+    'key' => 'ADMIN',
     'data' => $data,
   );
 }

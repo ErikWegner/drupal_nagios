@@ -173,8 +173,6 @@ function nagios_nagios() {
 }
 
 function nagios_check_requirements() {
-  $data = array();
-
   // Load .install files
   include_once './includes/install.inc';
   drupal_load_updates();
@@ -216,8 +214,6 @@ function nagios_check_requirements() {
 }
 
 function nagios_check_cron() {
-  $data = array();
-
   $cron_last = variable_get('cron_last', 0);
   $mins = variable_get('nagios_cron_duration', 60);
 
@@ -241,8 +237,6 @@ function nagios_check_cron() {
 }
 
 function nagios_check_nodes() {
-  $data = array();
-
   // Include number of active nodes in the report
   $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
   if (!$count) {
@@ -265,8 +259,6 @@ function nagios_check_nodes() {
 }
 
 function nagios_check_users() {
-  $data = array();
-
   // Include number of active users in the report
   $count = db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
   if ($count < 1) {
@@ -289,16 +281,14 @@ function nagios_check_users() {
 }
 
 function nagios_check_sessions() {
-  $data = array();
-
   $interval = time() - variable_get('user_block_seconds_online', 900);
-  $count_anon = sess_count($interval);
-  $count_auth = db_result(db_query("SELECT COUNT(*) FROM {sessions} WHERE uid > 0 AND timestamp >= %d", $interval));
+  $auth = sess_count($interval, FALSE);
+  $anon = sess_count($interval, TRUE);
 
   // Include number of sessions
   $data = array(
     'status' => NAGIOS_STATUS_OK,
-    'text'   => "$count_auth/$count_anon",
+    'text'   => "$auth/$anon",
   );
 
   return array(

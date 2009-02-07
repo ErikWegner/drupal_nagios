@@ -255,11 +255,10 @@ function nagios_check_sessions() {
 
   $interval = time() - 900; // Last 15 minutes
   $auth = sess_count($interval, FALSE);
-  if ($auth >= variable_get('nagios_sess_auth', 10)) {
-    $status = NAGIOS_STATUS_CRITICAL;
-  }
   $anon = sess_count($interval, TRUE);
-  if ($anon >= variable_get('nagios_sess_anon', 20)) {
+
+  // Check against the thresholds configured
+  if ($auth >= variable_get('nagios_sess_auth', 10) || $anon >= variable_get('nagios_sess_anon', 20)) {
     $status = NAGIOS_STATUS_CRITICAL;
   }
 

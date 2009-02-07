@@ -73,6 +73,13 @@ function nagios_menu() {
 function nagios_settings() {
   $group = 'modules';
 
+  $form['nagios_ua'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Unique ID'),
+    '#default_value' => variable_get('nagios_ua', 'Nagios'),
+    '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
+  );
+
   $form[$group] = array(
     '#type'        => 'fieldset',
     '#collapsible' => TRUE,
@@ -177,13 +184,6 @@ function nagios_nagios_info() {
  * Implementation of hook_nagios_settings()
  */
 function nagios_nagios_settings() {
-  $form['nagios_ua'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Unique ID'),
-    '#default_value' => variable_get('nagios_ua', 'Nagios'),
-    '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
-  );
-
   foreach(nagios_functions() as $function) {
     $var = 'nagios_func_' . $function;
     $form[$var] = array(

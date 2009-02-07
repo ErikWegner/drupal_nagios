@@ -131,7 +131,7 @@ fi
 
 DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'`"
 
-STATUS=`$ECHO $DATA | awk -F, '{print $1}'`
+STATUS=`$ECHO "$DATA" | awk -F, '{print $1}'`
 
 case $STATUS in
 "OK")
@@ -143,7 +143,7 @@ case $STATUS in
 "UNAUTHORIZED")
   exitstatus=$STATE_CRITICAL
   ;;
-"ERROR")
+"CRITICAL")
   exitstatus=$STATE_CRITICAL
   ;;
 *)

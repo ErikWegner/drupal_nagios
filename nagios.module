@@ -66,13 +66,6 @@ function nagios_settings() {
     '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
   );
 
-  $form['nagios_cron_duration'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Cron duration'),
-    '#default_value' => variable_get('nagios_cron_duration', 60),
-    '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
-  );
-
   foreach(nagios_functions() as $function) {
     $var = 'nagios_func_' . $function;
     $form[$var] = array(
@@ -81,6 +74,27 @@ function nagios_settings() {
       '#default_value' => variable_get($var, 0),
     );
   }
+
+  $form['nagios_cron_duration'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Cron duration'),
+    '#default_value' => variable_get('nagios_cron_duration', 60),
+    '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
+  );
+
+  $form['nagios_sess_anon'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Number of anonymous sessions'),
+    '#default_value' => variable_get('nagios_sess_anon', 20),
+    '#description'   => t('Issue a critical alert when we have that many anonymous sessions on the site for the last 15 minutes.')
+  );
+
+  $form['nagios_sess_auth'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Number of authenticated sessions'),
+    '#default_value' => variable_get('nagios_sess_auth', 10),
+    '#description'   => t('Issue a critical alert when we have that many authenticated sessions on the site for the last 15 minutes.')
+  );
 
   return system_settings_form($form);
 }
@@ -236,6 +250,31 @@ function nagios_check_cron() {
   );
 }
 
+function nagios_check_sessions() {
+  $status = NAGIOS_STATUS_OK;
+
+  $interval = time() - 900; // Last 15 minutes
+  $auth = sess_count($interval, FALSE);
+  if ($auth >= variable_get('nagios_sess_auth', 10)) {
+    $status = NAGIOS_STATUS_CRITICAL;
+  }
+  $anon = sess_count($interval, TRUE);
+  if ($anon >= variable_get('nagios_sess_anon', 20)) {
+    $status = NAGIOS_STATUS_CRITICAL;
+  }
+
+  // Include number of sessions
+  $data = array(
+    'status' => $status,
+    'text'   => "$auth/$anon",
+  );
+
+  return array(
+    'key' => 'SESSION',
+    'data' => $data,
+  );
+}
+
 function nagios_check_nodes() {
   // Include number of active nodes in the report
   $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
@@ -276,23 +315,6 @@ function nagios_check_users() {
 
   return array(
     'key' => 'USER',
-    'data' => $data,
-  );
-}
-
-function nagios_check_sessions() {
-  $interval = time() - variable_get('user_block_seconds_online', 900);
-  $auth = sess_count($interval, FALSE);
-  $anon = sess_count($interval, TRUE);
-
-  // Include number of sessions
-  $data = array(
-    'status' => NAGIOS_STATUS_OK,
-    'text'   => "$auth/$anon",
-  );
-
-  return array(
-    'key' => 'SESSION',
     'data' => $data,
   );
 }

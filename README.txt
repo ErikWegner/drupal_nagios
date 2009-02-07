@@ -131,8 +131,26 @@ API
 ---
 
 This module provides an API for other modules to report status back to Nagios.
-Your module should implement a hook_nagios() function like the one below, and return
-an associative array that looks like this:
+Your module should implement the following hooks:
+
+hook_nagios_info()
+------------------
+This hook is used to provide a way to enabled/disable a certain module from being included in Nagios
+reports and alerts.
+
+function yourmodule_nagios_info() {
+  return array(
+    'name'   => 'Your module name',
+    'id'     => 'IDENTIFIER',
+  );
+}
+
+hook_nagios()
+-------------
+Your module should have a yourmodule_nagios() function that does the actual work of checking something
+and reporting back a status and some info.
+
+The data returned is an associative array as follows:
 
 array(
   'key'  => 'IDENTIFIER', 
@@ -175,6 +193,10 @@ function yourmodule_nagios() {
   );
 }
 
+hook_nagios_settings()
+----------------------
+This hook provides standard form API elements to be included at admin/settings/nagios. You can
+set any thresholds you want in this hook.
 
 Bugs/Features/Patches:
 ----------------------

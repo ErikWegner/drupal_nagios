@@ -3,11 +3,15 @@
 
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 
+// Defines to be used by this modules and others that use its hook_nagios()
 define('NAGIOS_STATUS_OK',       0);
 define('NAGIOS_STATUS_UNKNOWN',  1);
 define('NAGIOS_STATUS_WARNING',  2);
 define('NAGIOS_STATUS_CRITICAL', 3);
 
+/**
+ * Mapping of defines to text strings that Nagios understands
+ */
 function nagios_status() {
   return array(
     NAGIOS_STATUS_OK       => 'OK',
@@ -17,15 +21,23 @@ function nagios_status() {
   );
 }
 
+/**
+ * Functions to be performed by the base nagios module.
+ */
 function nagios_functions() {
   return array(
-    // Check requirements (module updates, files directory writable, update.php protected,
-    // and many other good stuff, ...etc.)
+    // Checking of hook_requirements. This includes the following:
+    // - module updates
+    // - database schema
+    // - files directory writability
+    // - update.php protected
+    // - Lots of other good stuff ...
     'requirements',
-    // Check that cron has been running
+    // Checking whether cron has been running regularly
     'cron',
-    // Check anonymous and authenticated sessions
+    // Checking the number of anonymous and authenticated sessions
     'sessions',
+    // Checking the number of nodes and users.
     // These queries give some site statistics, and also serve to ensure the database is up
     'nodes',
     'users',
@@ -59,42 +71,36 @@ function nagios_menu() {
  * Callback for the settings page
  */
 function nagios_settings() {
-  $form['nagios_ua'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Unique ID'),
-    '#default_value' => variable_get('nagios_ua', 'Nagios'),
-    '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
+  $group = 'modules';
+
+  $form[$group] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Modules'),
+    '#description' => t('Select the modules that should report their data into Nagios.'),
   );
 
-  foreach(nagios_functions() as $function) {
-    $var = 'nagios_func_' . $function;
-    $form[$var] = array(
+  foreach(nagios_invoke_all('nagios_info') as $module => $data) {
+    $form[$group]['nagios_enable_' . $module] = array(
       '#type'          => 'checkbox',
-      '#title'         => $function,
-      '#default_value' => variable_get($var, 0),
+      '#title'         => $data['name'] . ' (' . $module . ')',
+      '#default_value' => variable_get('nagios_enable_' . $module, 0),
     );
   }
 
-  $form['nagios_cron_duration'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Cron duration'),
-    '#default_value' => variable_get('nagios_cron_duration', 60),
-    '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
-  );
+  foreach(nagios_invoke_all('nagios_settings') as $module => $module_settings) {
+    $form[$module] = array(
+      '#type'        => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed'   => TRUE,
+      '#title'       => $module,
+    );
 
-  $form['nagios_sess_anon'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Number of anonymous sessions'),
-    '#default_value' => variable_get('nagios_sess_anon', 20),
-    '#description'   => t('Issue a critical alert when we have that many anonymous sessions on the site for the last 15 minutes.')
-  );
-
-  $form['nagios_sess_auth'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Number of authenticated sessions'),
-    '#default_value' => variable_get('nagios_sess_auth', 10),
-    '#description'   => t('Issue a critical alert when we have that many authenticated sessions on the site for the last 15 minutes.')
-  );
+    foreach($module_settings as $element => $data) {
+      $form[$module][$element] = $data;
+    }
+  }
 
   return system_settings_form($form);
 }
@@ -108,7 +114,7 @@ function nagios_status_page() {
 
   $codes = nagios_status();
 
-  $nagios_data = nagios_invoke();
+  $nagios_data = nagios_invoke_all('nagios');
 
   // Find the highest level to be the overall status
   $severity = NAGIOS_STATUS_OK;
@@ -144,11 +150,10 @@ function nagios_status_page() {
 /**
  * Custom invoke function
  */
-function nagios_invoke() {
+function nagios_invoke_all($hook = 'nagios') {
+  // This is a custom invoke function that returns a keyed array
   $return = array();
   $args = func_get_args();
-  $hook = 'nagios';
-  // This is a custom invoke function that returns a keyed array
   foreach (module_implements($hook) as $module) {
     $function = $module .'_'. $hook;
     $result = call_user_func_array($function, $args);
@@ -156,6 +161,69 @@ function nagios_invoke() {
   }
 
   return $return;
+}
+
+/**
+ * Implementation of hook_nagios_info()
+ */
+function nagios_nagios_info() {
+  return array(
+    'name'   => 'Nagios monitoring',
+    'id'     => 'NAGIOS',
+  );
+}
+
+/**
+ * Implementation of hook_nagios_settings()
+ */
+function nagios_nagios_settings() {
+  $form['nagios_ua'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Unique ID'),
+    '#default_value' => variable_get('nagios_ua', 'Nagios'),
+    '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
+  );
+
+  foreach(nagios_functions() as $function) {
+    $var = 'nagios_func_' . $function;
+    $form[$var] = array(
+      '#type'          => 'checkbox',
+      '#title'         => $function,
+      '#default_value' => variable_get($var, 0),
+    );
+  }
+
+  $group = 'thresholds';
+  $form[$group] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Thresholds'),
+    '#description' => t('Thresholds for reporting critical alerts to Nagios.'),
+  );
+
+  $form[$group]['nagios_cron_duration'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Cron duration'),
+    '#default_value' => variable_get('nagios_cron_duration', 60),
+    '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
+  );
+
+  $form[$group]['nagios_sess_anon'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Number of anonymous sessions'),
+    '#default_value' => variable_get('nagios_sess_anon', 20),
+    '#description'   => t('Issue a critical alert when we have that many anonymous sessions on the site for the last 15 minutes.')
+  );
+
+  $form[$group]['nagios_sess_auth'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Number of authenticated sessions'),
+    '#default_value' => variable_get('nagios_sess_auth', 10),
+    '#description'   => t('Issue a critical alert when we have that many authenticated sessions on the site for the last 15 minutes.')
+  );
+
+  return $form;
 }
 
 /**

@@ -230,7 +230,7 @@ function nagios_nagios_settings() {
  * Implementation of hook_nagios
  */
 function nagios_nagios() {
-
+  // Check the unique ID string first
   $ua = variable_get('nagios_ua', 'Nagios');
   if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
     // This is not an authorized unique id, so do not send information out

@@ -193,6 +193,9 @@ function yourmodule_nagios() {
   );
 }
 
+For a real life example on how to use this API, check the performance.module in the devel project
+at http://drupal.org/project/devel
+
 hook_nagios_settings()
 ----------------------
 This hook provides standard form API elements to be included at admin/settings/nagios. You can

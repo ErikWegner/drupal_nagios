@@ -116,12 +116,32 @@ function nagios_settings() {
  * Callback for the nagios status page
  */
 function nagios_status_page() {
+  $skip_invoke = FALSE;
+
   header("Pragma: no-cache");
   header("Expires: 0");
 
   $codes = nagios_status();
 
-  $nagios_data = nagios_invoke_all('nagios');
+  // Check the unique ID string first
+  $ua = variable_get('nagios_ua', 'Nagios');
+  if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
+    // This is not an authorized unique id, so do not send information out
+    $skip_invoke = TRUE;
+    $nagios_data = array(
+      'nagios' =>  array(
+        'DRUPAL' => array(
+          'status' => NAGIOS_STATUS_UNKNOWN,
+          'text'   => t('Unauthorized'),
+        ),
+      ),
+    );
+  }
+
+  if (!$skip_invoke) {
+    // Not authorized, so skipping calling other modules
+    $nagios_data = nagios_invoke_all('nagios');
+  }
 
   // Find the highest level to be the overall status
   $severity = NAGIOS_STATUS_OK;
@@ -230,18 +250,6 @@ function nagios_nagios_settings() {
  * Implementation of hook_nagios
  */
 function nagios_nagios() {
-  // Check the unique ID string first
-  $ua = variable_get('nagios_ua', 'Nagios');
-  if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
-    // This is not an authorized unique id, so do not send information out
-    return array(
-      'DRUPAL' => array(
-        'status' => NAGIOS_STATUS_UNKNOWN,
-        'text'   => t('Unauthorized'),
-      ),
-    );
-  }
-
   $status = array();
   foreach(nagios_functions() as $function) {
     if (variable_get('nagios_func_' . $function, 0)) {

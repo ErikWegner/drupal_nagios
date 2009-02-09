@@ -209,18 +209,18 @@ function nagios_nagios_settings() {
     '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
   );
 
-  $form[$group]['nagios_sess_anon'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Number of anonymous sessions'),
-    '#default_value' => variable_get('nagios_sess_anon', 20),
-    '#description'   => t('Issue a critical alert when we have that many anonymous sessions on the site for the last 15 minutes.')
-  );
-
   $form[$group]['nagios_sess_auth'] = array(
     '#type'          => 'textfield',
     '#title'         => t('Number of authenticated sessions'),
     '#default_value' => variable_get('nagios_sess_auth', 10),
     '#description'   => t('Issue a critical alert when we have that many authenticated sessions on the site for the last 15 minutes.')
+  );
+
+  $form[$group]['nagios_sess_anon'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t('Number of anonymous sessions'),
+    '#default_value' => variable_get('nagios_sess_anon', 20),
+    '#description'   => t('Issue a critical alert when we have that many anonymous sessions on the site for the last 15 minutes.')
   );
 
   return $form;

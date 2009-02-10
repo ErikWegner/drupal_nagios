@@ -347,7 +347,7 @@ function nagios_check_sessions() {
   $anon = sess_count($interval, TRUE);
 
   // Check against the thresholds configured
-  if ($auth >= variable_get('nagios_sess_auth', 10) || $anon >= variable_get('nagios_sess_anon', 20)) {
+  if ($auth > variable_get('nagios_sess_auth', 10) || $anon > variable_get('nagios_sess_anon', 20)) {
     $status = NAGIOS_STATUS_CRITICAL;
   }
 

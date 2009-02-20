@@ -35,12 +35,17 @@ function nagios_functions() {
     'requirements',
     // Checking whether cron has been running regularly
     'cron',
-    // Checking the number of anonymous and authenticated sessions
-    'sessions',
+    // Checking the number of anonymous sessions
+    'session_anon',
+    // Checking the number of authenticated sessions
+    'session_auth',
     // Checking the number of nodes and users.
     // These queries give some site statistics, and also serve to ensure the database is up
     'nodes',
     'users',
+    // Modules and themes
+    'modules',
+    'themes',
   );
 }
 
@@ -92,7 +97,7 @@ function nagios_settings() {
     $form[$group]['nagios_enable_' . $module] = array(
       '#type'          => 'checkbox',
       '#title'         => $data['name'] . ' (' . $module . ')',
-      '#default_value' => variable_get('nagios_enable_' . $module, 0),
+      '#default_value' => variable_get('nagios_enable_' . $module, TRUE),
     );
   }
 
@@ -132,6 +137,7 @@ function nagios_status_page() {
       'nagios' =>  array(
         'DRUPAL' => array(
           'status' => NAGIOS_STATUS_UNKNOWN,
+          'type'   => 'state',
           'text'   => t('Unauthorized'),
         ),
       ),
@@ -155,17 +161,28 @@ function nagios_status_page() {
   // Identifier that we check on the other side
   $output = "\n" . 'nagios=' . $codes[$severity] . ', ';
 
+  $output_state = array();
+  $output_perf  = array();
+
   foreach($nagios_data as $module_name => $module_data) {
     foreach($module_data as $key => $value) {
-      $output .= $key . ':' .  $codes[$value['status']];
-      if (isset($value['text']) && !empty($value['text'])) {
-        $output .= '=' . $value['text'];
+      switch($value['type']) {
+        case 'state':
+          $tmp_state = $key . ':' . $codes[$value['status']];
+          if (!empty($value['text'])) {
+            $tmp_state .= '=' . $value['text'];
+          }
+          $output_state[] = $tmp_state;
+          break;
+
+        case 'perf':
+          $output_perf[]  = $key . '=' . $value['text'];
+          break;
       }
-      $output .= ', ';
     }
   }
 
-  $output .= "\n";
+  $output .= implode(', ', $output_state) . ' | ' . implode(';', $output_perf) . "\n";
 
   // Print the output, so we test the theme
   print theme('page', $output);
@@ -209,7 +226,7 @@ function nagios_nagios_settings() {
     $form[$var] = array(
       '#type'          => 'checkbox',
       '#title'         => $function,
-      '#default_value' => variable_get($var, 0),
+      '#default_value' => variable_get($var, TRUE),
     );
   }
 
@@ -229,20 +246,6 @@ function nagios_nagios_settings() {
     '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
   );
 
-  $form[$group]['nagios_sess_auth'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Number of authenticated sessions'),
-    '#default_value' => variable_get('nagios_sess_auth', 10),
-    '#description'   => t('Issue a critical alert when we have that many authenticated sessions on the site for the last 15 minutes.')
-  );
-
-  $form[$group]['nagios_sess_anon'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Number of anonymous sessions'),
-    '#default_value' => variable_get('nagios_sess_anon', 20),
-    '#description'   => t('Issue a critical alert when we have that many anonymous sessions on the site for the last 15 minutes.')
-  );
-
   return $form;
 }
 
@@ -252,7 +255,7 @@ function nagios_nagios_settings() {
 function nagios_nagios() {
   $status = array();
   foreach(nagios_functions() as $function) {
-    if (variable_get('nagios_func_' . $function, 0)) {
+    if (variable_get('nagios_func_' . $function, TRUE)) {
       $func = 'nagios_check_' . $function;
       $result = $func();
       $status[$result['key']] = $result['data'];
@@ -287,24 +290,28 @@ function nagios_check_requirements() {
     case REQUIREMENT_INFO:
       $data = array(
         'status' => NAGIOS_STATUS_OK, 
+        'type'   => 'state',
         'text'   => '',
       );
       break;
     case REQUIREMENT_WARNING:
       $data = array(
         'status' => NAGIOS_STATUS_WARNING, 
+        'type'   => 'state',
         'text'   => t('@desc', array('@desc' => $desc)),
       );
       break;
     case REQUIREMENT_ERROR:
       $data = array(
         'status' => NAGIOS_STATUS_CRITICAL, 
+        'type'   => 'state',
         'text'   => t('@desc', array('@desc' => $desc)),
       );
       break;
     default:
       $data = array(
         'status' => NAGIOS_STATUS_UNKNOWN, 
+        'type'   => 'state',
         'text'   => t('severity is @severity',array('@severity' => $severity)),
       );
       break;
@@ -323,12 +330,14 @@ function nagios_check_cron() {
   if (time() > ($cron_last + $mins*60)) {
     $data = array(
       'status' => NAGIOS_STATUS_CRITICAL,
+      'type'   => 'state',
       'text'   => t('cron not running @mins mins', array('@mins' => $mins)),
     );
   }
   else {
     $data = array(
       'status' => NAGIOS_STATUS_OK, 
+      'type'   => 'state',
       'text'   => '',
     );
   }
@@ -339,70 +348,92 @@ function nagios_check_cron() {
   );
 }
 
-function nagios_check_sessions() {
-  $status = NAGIOS_STATUS_OK;
-
+function nagios_check_session_anon() {
   $interval = time() - 900; // Last 15 minutes
-  $auth = sess_count($interval, FALSE);
-  $anon = sess_count($interval, TRUE);
+  $count = (int)sess_count($interval, TRUE);
 
-  // Check against the thresholds configured
-  if ($auth > variable_get('nagios_sess_auth', 10) || $anon > variable_get('nagios_sess_anon', 20)) {
-    $status = NAGIOS_STATUS_CRITICAL;
-  }
-
-  // Include number of sessions
   $data = array(
-    'status' => $status,
-    'text'   => "$auth/$anon",
+    'status' => NAGIOS_STATUS_OK,
+    'type'   => 'perf',
+    'text'   => $count,
   );
 
   return array(
-    'key' => 'SESSION',
+    'key' => 'SAN',
+    'data' => $data,
+  );
+}
+
+function nagios_check_session_auth() {
+  $interval = time() - 900; // Last 15 minutes
+  $count = (int)sess_count($interval, FALSE);
+
+  $data = array(
+    'status' => NAGIOS_STATUS_OK,
+    'type'   => 'perf',
+    'text'   => $count,
+  );
+
+  return array(
+    'key' => 'SAU',
     'data' => $data,
   );
 }
 
 function nagios_check_nodes() {
   // Include number of active nodes in the report
-  $count = db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
-  if (!$count) {
-    $data = array(
-      'status' => NAGIOS_STATUS_WARNING,
-      'text'   => t('No nodes'),
-    );
-  }
-  else {
-    $data = array(
-      'status' => NAGIOS_STATUS_OK, 
-      'text'   => $count,
-    );
-  }
+  $count = (int)db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
+  $data = array(
+    'status' => NAGIOS_STATUS_OK, 
+    'type'   => 'perf',
+    'text'   => $count,
+  );
 
   return array(
-    'key' => 'NODE',
+    'key'  => 'NOD',
     'data' => $data,
   );
 }
 
 function nagios_check_users() {
   // Include number of active users in the report
-  $count = db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
-  if ($count < 1) {
-    $data = array(
-      'status' => NAGIOS_STATUS_WARNING,
-      'text'   => t('No active users'),
-    );
-  }
-  else {
-    $data = array(
-      'status' => NAGIOS_STATUS_OK, 
-      'text'   => $count,
-    );
-  }
+  $count = (int)db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
+  $data = array(
+    'status' => NAGIOS_STATUS_OK, 
+    'type'   => 'perf',
+    'text'   => $count,
+  );
 
   return array(
-    'key' => 'USER',
+    'key' => 'USR',
+    'data' => $data,
+  );
+}
+
+function nagios_check_modules() {
+  $count = (int)db_result(db_query("SELECT COUNT(*) FROM {system} WHERE status = 1 AND type = 'module'"));
+  $data = array(
+    'status' => NAGIOS_STATUS_OK, 
+    'type'   => 'perf',
+    'text'   => $count,
+  );
+
+  return array(
+    'key' => 'MOD',
+    'data' => $data,
+  );
+}
+
+function nagios_check_themes() {
+  $count = (int)db_result(db_query("SELECT COUNT(*) FROM {system} WHERE status = 1 AND type = 'theme'"));
+  $data = array(
+    'status' => NAGIOS_STATUS_OK, 
+    'type'   => 'perf',
+    'text'   => $count,
+  );
+
+  return array(
+    'key' => 'THM',
     'data' => $data,
   );
 }

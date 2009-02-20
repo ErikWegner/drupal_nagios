@@ -156,6 +156,8 @@ array(
   'key'  => 'IDENTIFIER', 
   'data' => array(
     'status' => STATUS_CODE,
+    'type    => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown) or can be 'perf', which does
+                         // Cause an alert, but can be processed later by custom programs
     'text'   => 'Text description for the problem',
   ),
 );
@@ -177,12 +179,14 @@ function yourmodule_nagios() {
   if (!$count) {
     $data = array(
       'status' => NAGIOS_STATUS_WARNING,
+      'type'   => 'state',
       'text'   => t('A very brief description of the warning'),
     );
   }
   else {
     $data = array(
       'status' => NAGIOS_STATUS_OK,
+      'type'   => 'state',
       'text'   => '',
     );
   }

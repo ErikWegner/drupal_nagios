@@ -74,26 +74,51 @@ being run for each site.
 
 2. Change the commands.cfg file for Nagios to include the following:
 
+   Nagios 2.x:
+
    define command{
      command_name  check_drupal
      command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -u $ARG1$ -T $ARG2$
    }
 
+   Nagios 3.x:
+
+   define command{
+     command_name  check_drupal
+     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -U $ARG1$ -t $ARG2$
+   }
+
+   If you are monitoring multiple Drupal instances set up as virtual hosts, you
+   may have to use $HOSTNAME$ instead of $HOSTADDRESS$ in the command_line
+   parameter.
+
 3. Create a hostgroup for the hosts that run Drupal and need to be monitored.
    This is normally in a hostgroups.cfg file.
-   
+
    define hostgroup {
      hostgroup_name  drupal-servers
      alias           Drupal servers
-     members         yoursite.example.com, mysite.example.com 
+     members         yoursite.example.com, mysite.example.com
    }
 
 4. Defined a service that will run for this host group
 
+   Nagios 2.x:
+
    define service{
      hostgroup_name         drupal-servers
      service_description    DRUPAL
-     check_command          check_drupal!-U "unique_id" -t 2 
+     check_command          check_drupal!-U "unique_id" -t 2
+     use                    generic-service
+     notification_interval  0 ; set > 0 if you want to be renotified
+   }
+
+   Nagios 3.x:
+
+   define service{
+     hostgroup_name         drupal-servers
+     service_description    DRUPAL
+     check_command          check_drupal!unique_id!2
      use                    generic-service
      notification_interval  0 ; set > 0 if you want to be renotified
    }
@@ -153,7 +178,7 @@ and reporting back a status and some info.
 The data returned is an associative array as follows:
 
 array(
-  'key'  => 'IDENTIFIER', 
+  'key'  => 'IDENTIFIER',
   'data' => array(
     'status' => STATUS_CODE,
     'type    => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown) or can be 'perf', which does
@@ -164,8 +189,8 @@ array(
 
 STATUS_CODE must be one of the following, defined in nagios.module:
 
-  NAGIOS_STATUS_OK 
-  NAGIOS_STATUS_UNKNOWN 
+  NAGIOS_STATUS_OK
+  NAGIOS_STATUS_UNKNOWN
   NAGIOS_STATUS_WARNING
   NAGIOS_STATUS_CRITICAL
 

@@ -26,26 +26,18 @@ function nagios_status() {
  */
 function nagios_functions() {
   return array(
-    // Checking of hook_requirements. This includes the following:
-    // - module updates
-    // - database schema
-    // - files directory writability
-    // - update.php protected
-    // - Lots of other good stuff ...
-    'requirements',
-    // Checking whether cron has been running regularly
-    'cron',
-    // Checking the number of anonymous sessions
-    'session_anon',
-    // Checking the number of authenticated sessions
-    'session_auth',
-    // Checking the number of nodes and users.
-    // These queries give some site statistics, and also serve to ensure the database is up
-    'nodes',
-    'users',
-    // Modules and themes
-    'modules',
-    'themes',
+    'requirements' => t('Checking of hook_requirements. This includes the following: module updates, database schema, files directory writability, update.php protected, Lots of other good stuff ...'),
+
+    'cron' => t('Check whether cron has been running regularly'),
+
+    'session_anon' => t('Check the number of anonymous sessions for nagios performance data'),
+    'session_auth' => t('Check the number of authenticated sessions for nagios performance data'),
+
+    'nodes' => t('Check the number of nodes for nagios performance data'),
+    'users' => t('Check the number of users for nagios performance data'),
+
+    'modules' => t('Check the number of modules for nagios performance data'),
+    'themes'  => t('Check the number of themes for nagios performance data'),
   );
 }
 
@@ -221,12 +213,13 @@ function nagios_nagios_info() {
  * Implementation of hook_nagios_settings()
  */
 function nagios_nagios_settings() {
-  foreach(nagios_functions() as $function) {
+  foreach(nagios_functions() as $function => $description) {
     $var = 'nagios_func_' . $function;
     $form[$var] = array(
       '#type'          => 'checkbox',
       '#title'         => $function,
       '#default_value' => variable_get($var, TRUE),
+      '#description' => $description,
     );
   }
 
@@ -254,7 +247,7 @@ function nagios_nagios_settings() {
  */
 function nagios_nagios() {
   $status = array();
-  foreach(nagios_functions() as $function) {
+  foreach(nagios_functions() as $function => $description) {
     if (variable_get('nagios_func_' . $function, TRUE)) {
       $func = 'nagios_check_' . $function;
       $result = $func();

@@ -10,6 +10,7 @@ ECHO="/bin/echo"
 GREP="/bin/egrep"
 RM="/bin/rm"
 WGET="/usr/bin/wget"
+SSL=/bin/false
 
 PROGNAME=`/usr/bin/basename $0`
 PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
@@ -17,7 +18,14 @@ REVISION=`echo '$Revision$' | sed -e 's/[^0-9.]//g'`
 
 temp=/tmp/$PROGNAME.$$
 
-. $PROGPATH/utils.sh
+if [[ -e $PROGPATH/utils.sh ]]; then
+  . $PROGPATH/utils.sh
+elif [[ -e /usr/lib/nagios/plugins/utils.sh ]]; then
+  . /usr/lib/nagios/plugins/utils.sh
+else
+  echo 'Could not find nagios utils include file!'
+  exit 1
+fi
 
 print_usage() {
   $ECHO "Usage: $PROGNAME -U unique_id [ -H host_name ] [ -P path_to_nagios_status_page ] [ -t time_out_seconds ]"
@@ -76,6 +84,10 @@ while test -n "$1"; do
       path=$2
       shift
       ;;
+    -S)
+      SSL=/bin/true
+      shift
+      ;;
     -t) 
       timeout=$2
       shift
@@ -109,7 +121,11 @@ if [ "$unique_id" = "" ]; then
 fi
 
 
-CMD="$WGET -S -T $timeout -O - -U $unique_id http://$hostname/$path"
+if $SSL; then
+  CMD="$WGET --no-check-certificate -S -T $timeout -O - -U $unique_id https://$hostname/$path"
+else
+  CMD="$WGET -S -T $timeout -O - -U $unique_id http://$hostname/$path"
+fi
 
 $CMD > $temp 2>&1
 RC=$?

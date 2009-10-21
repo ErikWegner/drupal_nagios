@@ -88,6 +88,8 @@ being run for each site.
      command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -U $ARG1$ -t $ARG2$
    }
 
+   You can add the -S option for hosts that use https.
+
    If you are monitoring multiple Drupal instances set up as virtual hosts, you
    may have to use $HOSTNAME$ instead of $HOSTADDRESS$ in the command_line
    parameter.

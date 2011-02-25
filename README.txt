@@ -1,4 +1,3 @@
-$Id$
 
 Copyright 2009 Khalid Baheyeldin http://2bits.com
 

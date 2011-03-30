@@ -87,7 +87,6 @@ while test -n "$1"; do
       ;;
     -S)
       SSL=/bin/true
-      shift
       ;;
     -t) 
       timeout=$2

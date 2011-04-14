@@ -1,5 +1,6 @@
 
 Copyright 2009 Khalid Baheyeldin http://2bits.com
+Drush commands originally authored by Josh Waihi http://joshwaihi.com
 
 Description
 -----------
@@ -22,6 +23,9 @@ If you already use Nagios in your organization to monitor your infrastructure, t
 this module will be useful for you. If you only run one or two Drupal sites, Nagios
 may be overkill for this task.
 
+There are also drush commands to allow you to execute Nagios plugins on remote
+Linux/Unix machines using NRPE.
+
 Security Note
 -------------
 
@@ -35,6 +39,9 @@ To mitigate the security risks involve, make sure you use a unique ID. However, 
 not a fool proof solution. If you are concerned about this information being publicly
 accessible, then don't use this module.
 
+If you can run NRPE then it is recommended you disable Nagios checks via Drupal and only
+use NRPE checks via drush instead as a security enhancement.
+
 Installation
 ------------
 To install this module, do the following:
@@ -43,6 +50,9 @@ To install this module, do the following:
 
 2. Upload the nagios directory that you extracted to your sites/all/modules
    directory.
+   
+3. Optional, to enable Nagios NRPE download and read the documentation at
+   http://nagios.sourceforge.net/docs/nrpe/NRPE.pdf
 
 Configuration for Drupal
 ------------------------
@@ -152,6 +162,39 @@ Here is an explanation of some of the options:
   For a normal site where Drupal is installed in the web server's DocumentRoot, leave this unchanged.
   If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
   The default is the path nagios.
+
+
+Configuration for NRPE
+----------------------
+
+See http://nagios.sourceforge.net/docs/nrpe/NRPE.pdf for details on how to set up NRPE checks.
+
+Here is a basic example of checking cron is running.
+
+1. Edit the NRPE cfg file on the web server (normally /etc/nagios/nrpe.cfg) and add:
+
+     command[drupal_check_cron]=/path/to/drush -r /path/to/drupal nrpe cron
+
+2. Add an NRPE check to the Nagios server to check for "drupal_check_cron".
+
+
+NRPE requirements checks
+------------------------
+It is important to note you will get critical requirements errors from this
+module if your NRPE user does not have write permissions to the Drupal
+files directory. To resolve this, we recommend the following steps:
+
+1. chgrp your files directory to www-data (where www-data is the group
+   of your web server user)
+
+2. chmod your files directory to 775
+
+3. Add your NRPE user to the www-data group
+
+As a more secure alternative, it should be possible for the nrpe/nagios 
+user to sudo su  to become the www-data user to run the check, but we had a
+lot of issues making this work.
+
 
 API
 ---

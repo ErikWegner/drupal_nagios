@@ -494,6 +494,25 @@ function nagios_check_modules() {
   );
 }
 
+/**
+ * Implementation of hook_nagios_checks().
+ */
+function nagios_nagios_checks() {
+  return nagios_functions();
+}
+
+/**
+ * Implementation of drush hook_nagios_check().
+ */
+function nagios_nagios_check($function) {
+  // We don't bother to check if the function has been enabled by the user.
+  // Since this runs via drush, web security is not an issue.
+  $func = 'nagios_check_' . $function;
+  $result = $func();
+  $status[$result['key']] = $result['data'];
+  return $status;
+}
+
 function nagios_check_themes() {
   $count = (int)db_result(db_query("SELECT COUNT(*) FROM {system} WHERE status = 1 AND type = 'theme'"));
   $data = array(

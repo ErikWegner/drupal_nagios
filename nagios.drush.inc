@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implementation of hook_drush_command().
+ * Implements hook_drush_command().
  */
 function nagios_drush_command() {
   $items['nagios-list'] = array(

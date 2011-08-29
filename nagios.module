@@ -21,6 +21,18 @@ function nagios_status() {
 }
 
 /**
+ * Implementation of hook_init().
+ * 
+ * Based on Crell's CacheExclude project, suppresses caching of status page.
+ */
+function nagios_init() {
+  if (arg(0) == 'nagios' && !arg(1)) {
+    // We are on the Nagios status page - do not cache.
+    $GLOBALS['conf']['cache'] = FALSE;
+  }
+}
+
+/**
  * Functions to be performed by the base nagios module.
  */
 function nagios_functions() {

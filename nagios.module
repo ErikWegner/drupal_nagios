@@ -351,7 +351,18 @@ function nagios_check_requirements() {
   // Check the requirements as to the most severe status
   $severity = REQUIREMENT_OK;
   $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_OK) - 1;
+  // Set a flag for unknown/unavailable module update information.
+  $unknown = FALSE;
   foreach ($reqs as $key => $requirement) {
+    // Check if the update version is available.
+    // TODO: Right now this is a dumb check, look in to reporting exactly which module has no info available.
+    if (preg_match('/^No information is available/',
+      $requirement['description'])) {
+      // Raise the flag this is an UNKNOWN error, not OK.
+      $unknown = TRUE;
+      continue;
+    }
+
     if (isset($requirement['severity'])) {
       // Ignore update_core warning if update cache has expired and nagios_cron_duration has not passed by yet
       if ($key == 'update_core' && $requirement['severity'] == REQUIREMENT_WARNING && $requirement['reason'] == UPDATE_UNKNOWN) {
@@ -372,11 +383,22 @@ function nagios_check_requirements() {
   switch($severity) {
     case REQUIREMENT_OK:
     case REQUIREMENT_INFO:
-      $data = array(
-        'status' => NAGIOS_STATUS_OK, 
-        'type'   => 'state',
-        'text'   => '',
-      );
+      // If the UNKNOWN flag remains unset, consider status to be OK.
+      if (!$unknown) {
+        $data = array(
+          'status' => NAGIOS_STATUS_OK, 
+          'type'   => 'state',
+          'text'   => '',
+        );
+      }
+      // Otherwise, ambiguous update response, requires manual check.
+      else {
+        $data = array(
+          'status' => NAGIOS_STATUS_UNKNOWN, 
+          'type'   => 'state',
+          'text'   => '',
+        );
+      }
       break;
     case REQUIREMENT_WARNING:
       $data = array(

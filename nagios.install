@@ -6,3 +6,24 @@ function nagios_uninstall() {
   variable_del('nagios_updates');
   variable_del('nagios_ua');
 }
+
+/**
+ * Implementation of hook_requirements().
+ */
+function nagios_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    // Raise warning if Nagios Unique ID has not been set yet.
+    if (variable_get('nagios_ua', '') == '') {
+      $requirements['nagios'] = array(
+        'title' => t('Nagios module'),
+        'value' => t('Not configured'),
+        'description' => t('Nagios module has not been configured yet. Please configure its settings from the <a href="@url">Nagios settings page</a>.', array('@url' => url('admin/settings/nagios'))),
+        'severity' => REQUIREMENT_WARNING,
+      );
+    }
+  }
+
+  return $requirements;
+}

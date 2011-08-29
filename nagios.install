@@ -27,3 +27,20 @@ function nagios_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Setting Nagios status values to original declared defaults.
+ */
+function nagios_update_6100() {
+  $return_message = array();
+  variable_set('nagios_status_ok_value', 0);
+  variable_set('nagios_status_unknown_value', 1);
+  variable_set('nagios_status_warning_value', 2);
+  variable_set('nagios_status_critical_value', 3);
+
+  $return_message[] = array(
+    'success' => true,
+    'query' => 'Set variables so Nagios status values are set to old settings on update.',
+  );
+  return $return_message;
+}

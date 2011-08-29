@@ -3,10 +3,10 @@
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 
 // Defines to be used by this modules and others that use its hook_nagios()
-define('NAGIOS_STATUS_OK',       0);
-define('NAGIOS_STATUS_UNKNOWN',  1);
-define('NAGIOS_STATUS_WARNING',  2);
-define('NAGIOS_STATUS_CRITICAL', 3);
+define('NAGIOS_STATUS_OK',       variable_get('nagios_status_ok_value', 0));
+define('NAGIOS_STATUS_WARNING',  variable_get('nagios_status_warning_value', 1));
+define('NAGIOS_STATUS_CRITICAL', variable_get('nagios_status_critical_value', 2));
+define('NAGIOS_STATUS_UNKNOWN',  variable_get('nagios_status_unknown_value', 3));
 
 /**
  * Mapping of defines to text strings that Nagios understands

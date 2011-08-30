@@ -2,7 +2,7 @@
 
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 
-// Defines to be used by this modules and others that use its hook_nagios()
+// Defines to be used by this module and others that use its hook_nagios().
 define('NAGIOS_STATUS_OK',       variable_get('nagios_status_ok_value', 0));
 define('NAGIOS_STATUS_WARNING',  variable_get('nagios_status_warning_value', 1));
 define('NAGIOS_STATUS_CRITICAL', variable_get('nagios_status_critical_value', 2));
@@ -14,9 +14,9 @@ define('NAGIOS_STATUS_UNKNOWN',  variable_get('nagios_status_unknown_value', 3))
 function nagios_status() {
   return array(
     NAGIOS_STATUS_OK       => 'OK',
-    NAGIOS_STATUS_UNKNOWN  => 'UNKNOWN',
     NAGIOS_STATUS_WARNING  => 'WARNING',
     NAGIOS_STATUS_CRITICAL => 'CRITICAL',
+    NAGIOS_STATUS_UNKNOWN  => 'UNKNOWN',
   );
 }
 
@@ -356,11 +356,12 @@ function nagios_check_requirements() {
   foreach ($reqs as $key => $requirement) {
     // Check if the update version is available.
     // TODO: Right now this is a dumb check, look in to reporting exactly which module has no info available.
-    if (preg_match('/^No information is available/',
-      $requirement['description'])) {
-      // Raise the flag this is an UNKNOWN error, not OK.
-      $unknown = TRUE;
-      continue;
+    if ($requirement['description']) {
+      if (preg_match('/^No information is available/', $requirement['description'])) {
+        // Raise the flag this is an UNKNOWN error, not OK.
+        $unknown = TRUE;
+        continue;
+      }
     }
 
     if (isset($requirement['severity'])) {

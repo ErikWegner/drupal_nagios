@@ -4,10 +4,10 @@
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 
 // Defines to be used by this modules and others that use its hook_nagios()
-define('NAGIOS_STATUS_OK',        0);
-define('NAGIOS_STATUS_UNKNOWN',   1);
-define('NAGIOS_STATUS_WARNING',   2);
-define('NAGIOS_STATUS_CRITICAL', 3);
+define('NAGIOS_STATUS_OK',       variable_get('nagios_status_ok_value', 0));
+define('NAGIOS_STATUS_WARNING',  variable_get('nagios_status_warning_value', 1));
+define('NAGIOS_STATUS_CRITICAL', variable_get('nagios_status_critical_value', 2));
+define('NAGIOS_STATUS_UNKNOWN',  variable_get('nagios_status_unknown_value', 3));
 
 /**
  * Mapping of defines to text strings that Nagios understands
@@ -84,6 +84,38 @@ function nagios_settings($form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Enable status page?'),
     '#default_value' => variable_get('nagios_enable_status_page', TRUE),
+  );
+
+  $form['nagios_error_levels'] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Error levels'),
+    '#description' => t('Set the values to be used for error levels when reporting to Nagios.'),
+  );
+  $form['nagios_error_levels']['nagios_status_ok_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Status OK'),
+    '#description' => t('The value to send to Nagios for a Status OK message.'),
+    '#default_value' => variable_get('nagios_status_ok_value', 0),
+  );
+  $form['nagios_error_levels']['nagios_status_warning_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Warning'),
+    '#description' => t('The value to send to Nagios for a Warning message.'),
+    '#default_value' => variable_get('nagios_status_warning_value', 1),
+  );
+  $form['nagios_error_levels']['nagios_status_critical_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Critical'),
+    '#description' => t('The value to send to Nagios for a Critical message.'),
+    '#default_value' => variable_get('nagios_status_critical_value', 2),
+  );
+  $form['nagios_error_levels']['nagios_status_unknown_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Unknown'),
+    '#description' => t('The value to send to Nagios for an Unknown message.'),
+    '#default_value' => variable_get('nagios_status_unknown_value', 3),
   );
 
   $form[$group] = array(

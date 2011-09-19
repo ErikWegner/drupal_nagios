@@ -154,6 +154,9 @@ function nagios_settings($form, &$form_state) {
  * Callback for the nagios status page
  */
 function nagios_status_page() {
+  // Make sure this page is not cached.
+  drupal_page_is_cacheable(FALSE);
+
   $args = func_get_args();
   // Module to run checks for.
   $module = array_shift($args);

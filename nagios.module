@@ -70,7 +70,7 @@ function nagios_settings($form, &$form_state) {
   $form['nagios_ua'] = array(
     '#type' => 'textfield',
     '#title' => t('Unique ID'),
-    '#default_value' => variable_get('nagios_ua', 'Nagios'),
+    '#default_value' => variable_get('nagios_ua', ''),
     '#description' => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.'),
   );
 
@@ -165,21 +165,9 @@ function nagios_status_page() {
 
   $codes = nagios_status();
 
-  // Check the unique ID string first
-  $ua = variable_get('nagios_ua', 'Nagios');
-  if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
-    // This is not an authorized unique id, so just return this default status.
-    $nagios_data = array(
-      'nagios' => array(
-        'DRUPAL' => array(
-          'status' => NAGIOS_STATUS_UNKNOWN,
-          'type' => 'state',
-          'text' => t('Unauthorized'),
-        ),
-      ),
-    );
-  }
-  else {
+  // Check the unique ID string and access permissions first
+  $ua = variable_get('nagios_ua', '');
+  if (user_access('administer site configuration') || $_SERVER['HTTP_USER_AGENT'] == $ua) {
     // Authorized so calling other modules
     if ($module) {
       // A specific module has been requested.
@@ -189,6 +177,18 @@ function nagios_status_page() {
     else {
       $nagios_data = nagios_invoke_all('nagios');
     }
+  }
+  else {
+    // This is not an authorized unique id or uer, so just return this default status.
+    $nagios_data = array(
+      'nagios' =>  array(
+        'DRUPAL' => array(
+          'status' => NAGIOS_STATUS_UNKNOWN,
+          'type'   => 'state',
+          'text'   => t('Unauthorized'),
+        ),
+      ),
+    );
   }
 
   // Find the highest level to be the overall status

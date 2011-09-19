@@ -5,6 +5,12 @@
 function nagios_uninstall() {
   variable_del('nagios_updates');
   variable_del('nagios_ua');
+  variable_del('nagios_enable_status_page');
+  variable_del('nagios_show_outdated_names');
+  variable_del('nagios_status_ok_value');
+  variable_del('nagios_status_warning_value');
+  variable_del('nagios_status_critical_value');
+  variable_del('nagios_status_unknown_value');
 }
 
 /**

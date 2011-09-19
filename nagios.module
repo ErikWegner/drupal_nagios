@@ -93,6 +93,38 @@ function nagios_settings() {
     '#title'       => t('Show outdated module/theme name?'),
     '#default_value' => variable_get('nagios_show_outdated_names', TRUE),
   );
+
+  $form['nagios_error_levels'] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Error levels'),
+    '#description' => t('Set the values to be used for error levels when reporting to Nagios.'),
+  );
+  $form['nagios_error_levels']['nagios_status_ok_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Status OK'),
+    '#description' => t('The value to send to Nagios for a Status OK message.'),
+    '#default_value' => variable_get('nagios_status_ok_value', 0),
+  );
+  $form['nagios_error_levels']['nagios_status_warning_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Warning'),
+    '#description' => t('The value to send to Nagios for a Warning message.'),
+    '#default_value' => variable_get('nagios_status_warning_value', 1),
+  );
+  $form['nagios_error_levels']['nagios_status_critical_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Critical'),
+    '#description' => t('The value to send to Nagios for a Critical message.'),
+    '#default_value' => variable_get('nagios_status_critical_value', 2),
+  );
+  $form['nagios_error_levels']['nagios_status_unknown_value'] = array(
+    '#type'        => 'textfield',
+    '#title'       => t('Unknown'),
+    '#description' => t('The value to send to Nagios for an Unknown message.'),
+    '#default_value' => variable_get('nagios_status_unknown_value', 3),
+  );
   
   $form[$group] = array(
     '#type'        => 'fieldset',

@@ -11,7 +11,7 @@ function nagios_drush_command() {
   );
   $items['nagios-check'] = array(
     'description' => dt('Run a nagios command.'),
-    'arguments' => array('check'),
+    'arguments' => array('command' => 'The command to run'),
     'aliases' => array('nagios'),
   );
   return $items;
@@ -32,19 +32,24 @@ function drush_nagios_list() {
 /**
  * Drush command callback: nagios-check.
  */
-function drush_nagios_check($check) {
-  foreach (module_implements('nagios_checks') as $module) {
-    if (in_array($check, array_keys(module_invoke($module, 'nagios_checks')))) {
-      return nagios_check($module, $check);
+function drush_nagios_check($check = null) {
+  if (isset($check)) {
+    foreach (module_implements('nagios_checks') as $module) {
+      if (in_array($check, array_keys(module_invoke($module, 'nagios_checks')))) {
+        return nagios_check($module, $check);
+      }
     }
-  }
-  foreach (drush_command_implements('nagios_checks') as $command) {
-    $function = $command . '_nagios_checks';
-    if (in_array($check, array_keys($function()))) {
-      return nagios_check($command, $check);
+    foreach (drush_command_implements('nagios_checks') as $command) {
+      $function = $command . '_nagios_checks';
+      if (in_array($check, array_keys($function()))) {
+        return nagios_check($command, $check);
+      }
     }
+    drush_set_error(dt('The requested nagios check does not exist: !check.', array('!check' => $check)));
   }
-  drush_set_error(dt('The requested nagios check does not exist: !check.', array('!check' => $check)));
+  else {
+    drush_set_error(dt('Missing argument for nagios-check'));
+  }
 }
 
 /**

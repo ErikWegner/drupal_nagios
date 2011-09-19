@@ -379,6 +379,7 @@ function nagios_check_requirements() {
 
   // Check the requirements as to the most severe status
   $severity = REQUIREMENT_OK;
+  $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_OK) - 1;
   foreach ($reqs as $key => $requirement) {
     if (isset($requirement['severity'])) {
       // Ignore update_core warning if update cache has expired and nagios_cron_duration has not passed by yet
@@ -389,7 +390,7 @@ function nagios_check_requirements() {
           continue;
         }
       }
-      if ($requirement['severity'] > $severity) {
+      if (($requirement['severity'] > $severity) && ($requirement['severity'] >= $min_severity)) {
         $severity = $requirement['severity'];
         $desc = $requirement['title'];
       }

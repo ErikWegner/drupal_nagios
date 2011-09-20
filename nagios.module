@@ -385,13 +385,9 @@ function nagios_check_requirements() {
   $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_OK) - 1;
   foreach ($reqs as $key => $requirement) {
     if (isset($requirement['severity'])) {
-      // Ignore update_core warning if update cache has expired and nagios_cron_duration has not passed by yet
-      if ($key == 'update_core' && $requirement['severity'] == REQUIREMENT_WARNING && $requirement['reason'] == UPDATE_UNKNOWN) {
-        $grace = 60 * variable_get('nagios_cron_duration', 60);
-        $expire = db_query("SELECT expire FROM {cache_update} WHERE cid = :cid", array(':cid' => 'update_available_releases'))->fetchField();
-        if ($expire && REQUEST_TIME < ($expire + $grace)) {
-          continue;
-        }
+      // Ignore update_core warning if update check is pending
+      if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UPDATE_FETCH_PENDING) {
+        continue;
       }
       if (($requirement['severity'] > $severity) && ($requirement['severity'] >= $min_severity)) {
         $severity = $requirement['severity'];

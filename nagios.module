@@ -412,12 +412,15 @@ function nagios_check_requirements() {
           continue;
         }
       }
-      if (($requirement['severity'] > $severity) && ($requirement['severity'] >= $min_severity)) {
-        $severity = $requirement['severity'];
-        $desc = $requirement['title'];
+      if ($requirement['severity'] >= $min_severity) {
+        if ($requirement['severity'] > $severity) {
+          $severity = $requirement['severity'];
+        }
+        $descriptions[] = $requirement['title'];
       }
     }
   }
+  $desc = join(', ', $descriptions);
 
   // Create a status to pass back, and a text description too
   switch($severity) {

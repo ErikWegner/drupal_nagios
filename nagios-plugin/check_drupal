@@ -152,14 +152,14 @@ HTTP=`$GREP "HTTP/1" $temp`
 if [ "$RC" != 0 ]; then
   $ECHO "wget error: $RC: when accessing $hostname/$path. HTTP: $HTTP"
   $RM -f $temp
-  exit $STATE_CRITICAL
+  exit $STATE_UNKNOWN
 fi
 
 HTTP_CODE=`$ECHO "$HTTP" | awk '{print $2}'`
 if [ "$HTTP_CODE" != "200" ]; then
   $ECHO "HTTP returned an error code. HTTP: $HTTP"
   $RM -f $temp
-  exit $STATE_CRITICAL
+  exit $STATE_UNKNOWN
 fi
 
 DATA="`$GREP "nagios=" $temp | sed -e 's/^.*nagios=//g'`"

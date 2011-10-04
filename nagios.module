@@ -51,10 +51,12 @@ function nagios_menu() {
     'access arguments' => array('administer site configuration'),
   );
 
-  $items['nagios'] = array(
+  $path = variable_get('nagios_page_path', 'nagios');
+  $callback = variable_get('nagios_page_callback', 'nagios_status_page');
+  $items[$path] = array(
     'type' => MENU_SUGGESTED_ITEM,
     'title' => 'Nagios status page',
-    'page callback' => 'nagios_status_page',
+    'page callback' => $callback,
     'access callback' => 'variable_get',
     'access arguments' => array('nagios_enable_status_page', TRUE),
   );
@@ -80,10 +82,29 @@ function nagios_settings($form, &$form_state) {
     '#default_value' => variable_get('nagios_show_outdated_names', TRUE),
   );
 
-  $form['nagios_enable_status_page'] = array(
+  $form['nagios_status_page'] = array(
+    '#type'        => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed'   => FALSE,
+    '#title'       => t('Status page settings'),
+    '#description' => t('Control the availability and location of the HTTP status page. NOTE: you must clear the menu cache for changes to these settings to register.'),
+  );
+  $form['nagios_status_page']['nagios_enable_status_page'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable status page?'),
     '#default_value' => variable_get('nagios_enable_status_page', TRUE),
+  );
+  $form['nagios_status_page']['nagios_page_path'] = array(
+    '#type' => 'textfield',
+    '#title' =>   t('Nagios page path'),
+    '#description' => t('Enter the path for the Nagios HTTP status page. It must be a valid Drupal path.'),
+    '#default_value' => variable_get('nagios_page_path', 'nagios'),
+  );
+  $form['nagios_status_page']['nagios_page_callback'] = array(
+    '#type' => 'textfield',
+    '#title' =>   t('Nagios page callback'),
+    '#description' => t('Enter the name of the callback function to be used by the Nagios status page. Take care and be sure this function exists before clearing the menu cache!'),
+    '#default_value' => variable_get('nagios_page_callback', 'nagios_status_page'),
   );
 
   $form['nagios_error_levels'] = array(
@@ -381,6 +402,7 @@ function nagios_check_requirements() {
   $reqs = module_invoke_all('requirements', 'runtime');
 
   // Check the requirements as to the most severe status
+  $descriptions = array();
   $severity = REQUIREMENT_OK;
   $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_OK) - 1;
   foreach ($reqs as $key => $requirement) {
@@ -389,12 +411,15 @@ function nagios_check_requirements() {
       if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UPDATE_FETCH_PENDING) {
         continue;
       }
-      if (($requirement['severity'] > $severity) && ($requirement['severity'] >= $min_severity)) {
-        $severity = $requirement['severity'];
-        $desc = $requirement['title'];
+      if ($requirement['severity'] >= $min_severity) {
+        if ($requirement['severity'] > $severity) {
+          $severity = $requirement['severity'];
+        }
+        $descriptions[] = $requirement['title'];
       }
     }
   }
+  $desc = join(', ', $descriptions);
 
   // Create a status to pass back, and a text description too
   switch ($severity) {

@@ -389,7 +389,7 @@ function nagios_check_requirements() {
 
   // Check the requirements as to the most severe status
   $severity = REQUIREMENT_OK;
-  $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_OK) - 1;
+  $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_WARNING);
   // Set a flag for unknown/unavailable module update information.
   $unknown = FALSE;
   foreach ($reqs as $key => $requirement) {

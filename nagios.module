@@ -396,7 +396,7 @@ function nagios_check_requirements() {
     // Check if the update version is available.
     // TODO: Right now this is a dumb check, look in to reporting exactly which module has no info available.
     if ($requirement['description']) {
-      if (preg_match('/^No information is available/', $requirement['description'])) {
+      if (isset($requirement['description']) && preg_match('/^No information is available/', $requirement['description'])) {
         // Raise the flag this is an UNKNOWN error, not OK.
         $unknown = TRUE;
         continue;

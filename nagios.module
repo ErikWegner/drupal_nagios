@@ -379,6 +379,13 @@ function nagios_nagios() {
   return $status;
 }
 
+/**
+ * Check is all Drupal requirenemts are satisfied.
+ *
+ * Calls hook_requirements on all modules to gather info.
+ *
+ * @return Array
+ */
 function nagios_check_requirements() {
   // Load .install files
   include_once './includes/install.inc';
@@ -472,6 +479,11 @@ function nagios_check_requirements() {
   );
 }
 
+/**
+ * Check when the Drupal cron system was last invoked.
+ *
+ * @return Array
+ */
 function nagios_check_cron() {
   $cron_last = variable_get('cron_last', 0);
   $mins = variable_get('nagios_cron_duration', 60);
@@ -497,6 +509,11 @@ function nagios_check_cron() {
   );
 }
 
+/**
+ * Report the number of anonymous sessions.
+ *
+ * @return Array
+ */
 function nagios_check_session_anon() {
   $interval = time() - 900; // Last 15 minutes
   $count = (int)sess_count($interval, TRUE);
@@ -513,6 +530,11 @@ function nagios_check_session_anon() {
   );
 }
 
+/**
+ * Report the number of logged in sessions.
+ *
+ * @return Array
+ */
 function nagios_check_session_auth() {
   $interval = time() - 900; // Last 15 minutes
   $count = (int)sess_count($interval, FALSE);
@@ -529,6 +551,11 @@ function nagios_check_session_auth() {
   );
 }
 
+/**
+ * Report the number of published nodes.
+ *
+ * @return Array
+ */
 function nagios_check_nodes() {
   // Include number of active nodes in the report
   $count = (int)db_result(db_query("SELECT COUNT(*) FROM {node} WHERE status = 1"));
@@ -544,6 +571,11 @@ function nagios_check_nodes() {
   );
 }
 
+/**
+ * Report the number of active user accounts.
+ *
+ * @return Array
+ */
 function nagios_check_users() {
   // Include number of active users in the report
   $count = (int)db_result(db_query("SELECT COUNT(*) FROM {users} WHERE status = 1"));
@@ -559,6 +591,11 @@ function nagios_check_users() {
   );
 }
 
+/**
+ * Report the number of enabled modules.
+ *
+ * @return Array
+ */
 function nagios_check_modules() {
   $count = (int)db_result(db_query("SELECT COUNT(*) FROM {system} WHERE status = 1 AND type = 'module'"));
   $data = array(
@@ -592,6 +629,11 @@ function nagios_nagios_check($function) {
   return $status;
 }
 
+/**
+ * Report the number of enabled themes.
+ *
+ * @return Array
+ */
 function nagios_check_themes() {
   $count = (int)db_result(db_query("SELECT COUNT(*) FROM {system} WHERE status = 1 AND type = 'theme'"));
   $data = array(

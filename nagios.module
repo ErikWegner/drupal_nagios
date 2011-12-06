@@ -390,8 +390,11 @@ function nagios_nagios() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Check is all Drupal requirenemts are satisfied.
+ *
+ * Calls hook_requirements on all modules to gather info.
+ *
+ * @return Array
  */
 function nagios_check_requirements() {
   // Load .install files
@@ -477,8 +480,9 @@ function nagios_check_requirements() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Check when the Drupal cron system was last invoked.
+ *
+ * @return Array
  */
 function nagios_check_cron() {
   $cron_last = variable_get('cron_last', 0);
@@ -506,8 +510,9 @@ function nagios_check_cron() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Report the number of anonymous sessions.
+ *
+ * @return Array
  */
 function nagios_check_session_anon() {
   $interval = REQUEST_TIME - 900; // Last 15 minutes
@@ -528,13 +533,13 @@ function nagios_check_session_anon() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Report the number of logged in sessions.
+ *
+ * @return Array
  */
 function nagios_check_session_auth() {
   $interval = REQUEST_TIME - 900; // Last 15 minutes
-  // sess_count() no longer exists in Drupal 7. Replace with a custom query.
-  //$count = (int) sess_count($interval, FALSE);
+
   $count = (int) db_query("SELECT COUNT(*) FROM {sessions} WHERE timestamp >= :timestamp AND uid > :uid", array(':timestamp' => $interval, ':uid' => 0))->fetchField();
 
   $data = array(
@@ -550,8 +555,9 @@ function nagios_check_session_auth() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Report the number of published nodes.
+ *
+ * @return Array
  */
 function nagios_check_nodes() {
   // Include number of active nodes in the report
@@ -569,8 +575,9 @@ function nagios_check_nodes() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Report the number of active user accounts.
+ *
+ * @return Array
  */
 function nagios_check_users() {
   // Include number of active users in the report
@@ -588,8 +595,9 @@ function nagios_check_users() {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Report the number of enabled modules.
+ *
+ * @return Array
  */
 function nagios_check_modules() {
   $count = (int) db_query("SELECT COUNT(*) FROM {system} WHERE status = :status AND type = :type", array(':status' => 1, ':type' => 'module'))->fetchField();
@@ -625,8 +633,9 @@ function nagios_nagios_check($function) {
 }
 
 /**
- * @todo Please document this function.
- * @see http://drupal.org/node/1354
+ * Report the number of enabled themes.
+ *
+ * @return Array
  */
 function nagios_check_themes() {
   $count = (int) db_query("SELECT COUNT(*) FROM {system} WHERE status = :status AND type = :type", array(':status' => 1, ':type' => 'theme'))->fetchField();

@@ -80,6 +80,9 @@ being run for each site.
 
 1. Copy the check_drupal script in the nagios-plugin directory to your Nagios plugins
    directory (e.g. /usr/lib/nagios/plugins).
+   
+   Depending on your Linux distribution, you may need to alter the PROGPATH variable
+   in check_drupal to the correct location for Nagios utils.sh script.
 
 2. Change the commands.cfg file for Nagios to include the following:
 

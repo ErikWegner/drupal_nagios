@@ -407,15 +407,8 @@ function nagios_check_requirements() {
   // Check the requirements as to the most severe status
   $descriptions = array();
   $severity = REQUIREMENT_OK;
-  $unknown = FALSE;
   $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_WARNING);
   foreach ($reqs as $key => $requirement) {
-    if (isset($requirement['description']) && preg_match('/^No information is available/', $requirement['description'])) {
-      $unknown = TRUE;
-      continue;
-    }
-    // TODO: see update.report.inc for reporting which modules
-
     if (isset($requirement['severity'])) {
       // Ignore update_core warning if update check is pending
       if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UPDATE_FETCH_PENDING) {
@@ -429,26 +422,22 @@ function nagios_check_requirements() {
       }
     }
   }
-  $desc = join(', ', $descriptions);
+  if (empty($descriptions)) {
+    $desc = t('No information.');
+  }
+  else {
+    $desc = join(', ', $descriptions);
+  }
 
   // Create a status to pass back, and a text description too
   switch ($severity) {
     case REQUIREMENT_OK:
     case REQUIREMENT_INFO:
-      if ($unknown == FALSE) {
-        $data = array(
-          'status' => NAGIOS_STATUS_OK,
-          'type' => 'state',
-          'text' => '',
-        );
-      }
-      else {
-        $data = array(
-          'status' => NAGIOS_STATUS_UNKNOWN, 
-          'type'   => 'state',
-          'text'   => '',
-        );
-      }
+      $data = array(
+        'status' => NAGIOS_STATUS_OK,
+        'type' => 'state',
+        'text' => t('No known issues at this time.'),
+      );
       break;
     case REQUIREMENT_WARNING:
       $data = array(

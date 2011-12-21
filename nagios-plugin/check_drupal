@@ -24,7 +24,7 @@ if [[ -e $PROGPATH/utils.sh ]]; then
 elif [[ -e /usr/lib/nagios/plugins/utils.sh ]]; then
   . /usr/lib/nagios/plugins/utils.sh
 else
-  echo 'Could not find nagios utils include file!'
+  echo 'Could not find nagios utils include file! Set PROGPATH on line 17 of the check_drupal script.'
   exit 1
 fi
 

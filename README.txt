@@ -90,7 +90,7 @@ being run for each site.
 
    define command{
      command_name  check_drupal
-     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -u $ARG1$ -T $ARG2$
+     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -U $ARG1$ -t $ARG2$
    }
 
    Nagios 3.x:

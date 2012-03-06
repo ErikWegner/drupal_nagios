@@ -1,4 +1,4 @@
 name = Nagios monitoring
-description = Exposes a page that Nagios can monitor
+description = Exposes a page that Nagios can monitor and drush hooks for NRPE.
 core = 6.x
 package = "Monitoring"

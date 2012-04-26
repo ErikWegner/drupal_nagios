@@ -404,6 +404,9 @@ function nagios_check_requirements() {
         $grace = 60 * variable_get('nagios_cron_duration', 60);
         $expire = db_result(db_query("SELECT expire FROM {cache_update} WHERE cid = '%s'", 'update_available_releases'));
         if ($expire && time() < ($expire + $grace)) {
+          // Set the severity/desc to what was previously set - updates are currently running, and we're in an unknown state.
+          $severity = cache_get('nagios_prev_severity');
+          $descriptions = cache_get('nagios_prev_desc');
           continue;
         }
       }
@@ -421,6 +424,10 @@ function nagios_check_requirements() {
   else {
     $desc = join(', ', $descriptions);
   }
+
+  // Cache the current severity and descriptions - we may need to remember them if updates are running.
+  cache_set('nagios_prev_severity', $severity);
+  cache_set('nagios_prev_desc', $descriptions);
 
   // Create a status to pass back, and a text description too
   switch($severity) {

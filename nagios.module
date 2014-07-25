@@ -232,7 +232,7 @@ function nagios_status_page() {
 
   foreach ($nagios_data as $module_name => $module_data) {
     foreach ($module_data as $key => $value) {
-      if ($value['status'] >= $min_severity) {
+      if (is_array($value) && array_key_exists('status', $value) && $value['status'] >= $min_severity) {
         $severity = max($severity, $value['status']);
       }
     }

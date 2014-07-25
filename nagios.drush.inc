@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Provides drush integration for the Nagios module.
+ */
 
 /**
  * Implements hook_drush_command().
@@ -32,7 +36,7 @@ function drush_nagios_list() {
 /**
  * Drush command callback: nagios-check.
  */
-function drush_nagios_check($check = null) {
+function drush_nagios_check($check = NULL) {
   if (isset($check)) {
     foreach (module_implements('nagios_checks') as $module) {
       if (in_array($check, array_keys(module_invoke($module, 'nagios_checks')))) {

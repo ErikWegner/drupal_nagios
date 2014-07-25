@@ -310,10 +310,9 @@ function nagios_status_page() {
 
   $output .= implode(', ', $output_state) . ' | ' . implode(';', $output_perf) . "\n";
 
-  // Print the output, so we test the theme
-  // TODO Please change this theme call as discussed at http://drupal.org/node/224333#theme_page.
-  // print theme('page', $output);
-  return $output;
+  // Output the status page directly with no theming for speed.
+  // If people want a themed status page they can write their own and alter the callback in admin.
+  echo $output;
 
   // Exit early so we do not cache the data, nor do we wrap the result in a theme
   exit();

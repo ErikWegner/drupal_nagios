@@ -117,6 +117,12 @@ function nagios_settings($form, &$form_state) {
     '#description' => t('Enter the name of the callback function to be used by the Nagios status page. Take care and be sure this function exists before clearing the menu cache!'),
     '#default_value' => variable_get('nagios_page_callback', 'nagios_status_page'),
   );
+  $form['nagios_status_page']['nagios_enable_status_page_get'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Unique ID checking via URL on status page?'),
+    '#default_value' => variable_get('nagios_enable_status_page_get', FALSE),
+    '#description' => t('If enabled the $_GET variable "unique_id" is used for checking the correct Unique ID instead of "User Agent" ($_SERVER[\'HTTP_USER_AGENT\']). This alternative checking is only working if the URL is containing the value like "/nagios?unique_id=*****". This feature is useful to avoid webserver stats with the Unique ID as "User Agent" and helpful for human testing.'),
+  );
 
   $form['nagios_error_levels'] = array(
     '#type'        => 'fieldset',
@@ -200,9 +206,18 @@ function nagios_status_page() {
 
   $codes = nagios_status();
 
-  // Check the unique ID string and access permissions first
+  // Check the unique ID string and access permissions first.
   $ua = variable_get('nagios_ua', '');
-  if (user_access('administer site configuration') || $_SERVER['HTTP_USER_AGENT'] == $ua) {
+  $request_code = $_SERVER['HTTP_USER_AGENT'];
+
+  // Check if HTTP GET variable "unique_id" is used and the usage is allowed.
+  if (isset($_GET['unique_id'])) {
+    if (variable_get('nagios_enable_status_page_get', FALSE) == TRUE) {
+      $request_code = $_GET['unique_id'];
+    }
+  }
+
+  if (user_access('administer site configuration') || ($request_code == $ua)) {
     // Authorized so calling other modules
     if ($module) {
       // A specific module has been requested.
@@ -499,7 +514,7 @@ function nagios_check_requirements() {
     }
   }
 
-  
+
 
   $reqs = array();
 

@@ -418,18 +418,20 @@ function nagios_form_system_modules_alter(&$form, &$form_state, $form_id) {
   }
 
   $nagios_ignored_modules = variable_get('nagios_ignored_modules', array());
-
+  $projects_data = update_get_projects();
   foreach ($form['modules'] as $package_name => &$package) {
     if ($package_name[0] != '#') {
       foreach ($package as $module_name => &$module) {
         if ($module_name[0] != '#') {
-          $module['links']['nagios_ignore'] = array(
-            '#type' => 'checkbox',
-            '#title' => t('Ignore from Nagios'),
-            '#default_value' => isset($nagios_ignored_modules[$module_name]) && $nagios_ignored_modules[$module_name] ? TRUE : FALSE,
-          );
-          if (!module_exists('coder_review')) {
-            $package['#theme'] = 'nagios_modules_fieldset';
+          if (isset($module['enable']['#default_value']) && $module['enable']['#default_value'] == TRUE && array_key_exists($module_name, $projects_data)) {
+            $module['links']['nagios_ignore'] = array(
+              '#type' => 'checkbox',
+              '#title' => t('Ignore from Nagios'),
+              '#default_value' => isset($nagios_ignored_modules[$module_name]) && $nagios_ignored_modules[$module_name] ? TRUE : FALSE,
+            );
+            if (!module_exists('coder_review')) {
+              $package['#theme'] = 'nagios_modules_fieldset';
+            }
           }
         }
       }
@@ -514,18 +516,65 @@ function nagios_check_requirements() {
     }
   }
 
+  // Copied from update_requirements(). Get available update data for projects.
+  $data = array();
+  // TODO: The TRUE param should be made configurable when writing a drush
+  // command, so we don't rely on cached data.
+  if ($available = update_get_available(TRUE)) {
+    module_load_include('inc', 'update', 'update.compare');
+    $data = update_calculate_project_data($available);
+  }
+  // Remove from the update data array the projects ignored.
+  foreach ($nagios_ignored_modules as $key => $value) {
+    unset($data[$key]);
+  }
 
-
+  // Cycle through enabled modules for requirements checks.
   $reqs = array();
-
+  $core_modules = array_keys($project_data['drupal']['includes']);
   foreach ($enabled_modules as $module_name) {
+
     $requirements_data = module_invoke($module_name, 'requirements', 'runtime');
     if (count($requirements_data)) {
+      // Intercept the Update Status module to respect our Ignore behaviour.
+      // Note, if $data is empty then there's no available update data and Update Status will handle that for us.
+      if ($module_name == 'update' && !empty($data)) {
+        // Don't want the 'update_contrib' section reported by 'update' module,
+        // because that one contains *ALL* modules, even the ones ignored by
+        // nagios module.
+        unset($requirements_data['update_contrib']);
+        // Now we need to loop through all modules again to reset 'update_contrib'.
+        foreach ($enabled_modules as $module_name) {
+          // Double check we're not processing a core module.
+          if (!in_array($module_name, array_keys($project_data['drupal']['includes']))) {
+            // If the module is a sub-module (eg views_ui) then we need to set the status key.
+            // Without this,  _update_requirement_check() will return severity = 2.
+            if (isset($data[$module_name]['status']) && is_numeric($data[$module_name]['status'])) {
+              // Within this clause, only contrib modules are processed. Get update
+              // status for the current one, and store data as it would be left
+              // by update_requirements() function.
+              $contrib_req = _update_requirement_check($data[$module_name], 'contrib');
+              $contrib_req['name'] = $module_name;
+              // If module up to date, set a severity of -1 for sorting purposes.
+              if (!isset($contrib_req['severity'])) {
+                $contrib_req['severity'] = -1;
+              }
+              // Build an array of required contrib updates.
+              if ($contrib_req) {
+                $module_data[] = $contrib_req;
+              }
+            }
+          }
+        }
+        // Sort our finished array by severity so we can set Nagios status accordingly.
+        usort($module_data, '_nagios_updates_sort_by_severity');
+        // Add the 'worst case' to requirements.
+        $requirements_data['update_contrib'] = array_pop($module_data);
+      }
       $reqs += $requirements_data;
     }
   }
 
-  unset($reqs['update_contrib']);
   // Check the requirements as to the most severe status
   $descriptions = array();
   $severity = REQUIREMENT_OK;
@@ -583,6 +632,7 @@ function nagios_check_requirements() {
       );
       break;
   }
+
   return array(
     'key' => 'ADMIN',
     'data' => $data,
@@ -838,4 +888,17 @@ function theme_nagios_modules_fieldset($variables) {
   }
 
   return theme('table', array('header' => $form['#header'], 'rows' => $rows));
+}
+
+/**
+ * Helper function to sort modules by severity with usort().
+ */
+function _nagios_updates_sort_by_severity($a, $b) {
+  if (isset($a['severity']) && isset($b['severity'])) {
+    if ($a['severity'] == $b['severity']) {
+      return 0;
+    }
+    return ($a['severity'] < $b['severity']) ? -1 : 1;
+  }
+  return 0;
 }

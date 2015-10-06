@@ -27,6 +27,7 @@ function nagios_status() {
 function nagios_functions() {
   return array(
     'requirements' => t('Checking of hook_requirements. This includes the following: module updates, database schema, files directory writability, update.php protected, Lots of other good stuff ...'),
+    'watchdog' => t('Check recent watchdog entries'),
     'cron' => t('Check whether cron has been running regularly'),
     'session_anon' => t('Check the number of anonymous sessions for nagios performance data'),
     'session_auth' => t('Check the number of authenticated sessions for nagios performance data'),
@@ -171,6 +172,26 @@ function nagios_settings($form, &$form_state) {
       '#default_value' => variable_get('nagios_enable_' . $module, TRUE),
     );
   }
+
+  $form['watchdog'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#title' => t('Watchdog Settings'),
+    '#description' => t('Controls how watchdog messages are retreived and displayed when watchdog checking is set.'),
+  );
+  $form['watchdog']['limit_watchdog_display'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Limit watchdog display',
+    '#default_value' => variable_get('limit_watchdog_display', FALSE),
+    '#description' => t('Limit watchdog messages to only those that are new since the last check.'),
+  );
+  $form['watchdog']['limit_watchdog_results'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Limit watchdog logs',
+    '#default_value' => variable_get('limit_watchdog_results', 50),
+    '#description' => t('Limit the number of watchdog logs that are checked. E.G. 50 will only check the newest 50 logs.'),
+  );
 
   foreach (nagios_invoke_all('nagios_settings') as $module => $module_settings) {
     $form[$module] = array(
@@ -636,6 +657,132 @@ function nagios_check_requirements() {
   return array(
     'key' => 'ADMIN',
     'data' => $data,
+  );
+}
+
+/**
+ * Check Drupal {watchdog} table recent entries.
+ *
+ * @return Array
+ */
+function nagios_check_watchdog() {
+  //@TODO Allow LIMIT and OFFSET to be passed in or configurable, or use existing Drupal settings
+  //@TODO Manually count the rows on admin/reports/dblog and match that if nothing else
+  //@TODO Do this more the Drupal Way, whatever that might be
+  //@TODO Allow multi-value 'type' and/or 'severity' inputs for filtering
+  //@TODO Allow datetime ranges
+
+  // Constuct base select query.
+  $query = db_select('watchdog', 'w');
+  $query->fields('w', array('wid', 'uid', 'type', 'severity', 'message', 'variables', 'link', 'location', 'hostname', 'timestamp'));
+  $query->orderBy('timestamp', 'DESC');
+
+  // Get watchdog result limit.
+  $limit = variable_get('limit_watchdog_results', 50);
+  if (!empty($limit)) {
+    // Get range.
+    $offset = 0;
+    // Set range.
+    $query->range($offset, $limit);
+  }
+
+  // Check if we are limiting to only new logs since last check.
+  $limit_watchdog = variable_get('limit_watchdog_display', FALSE);
+  if (!empty($limit_watchdog)) {
+    // Get timestamp of the last watchdog entry retrieved.
+    $limit_watchdog_timestamp = variable_get('limit_watchdog_timestamp', FALSE);
+    if ($limit_watchdog_timestamp !== FALSE) {
+      // Ensure we only get entries that are greater then the timestamp.
+      $query->condition('timestamp', $limit_watchdog_timestamp,'>');
+    }
+  }
+
+  // Execute query.
+  $result = $query->execute();
+  if (!$result) {
+    return array(
+      'status' => NAGIOS_STATUS_UNKNOWN,
+      'type' => 'state',
+      'text' => t('Unable to SELECT FROM {watchdog}')
+    );
+  }
+
+  //RFC3164/Watchdog has 8 levels. Nagios module has 3 (plus UNKNOWN). This maps one to the other.
+  $severity_translation = array(
+    //watchdog => nagios
+    WATCHDOG_DEBUG => NAGIOS_STATUS_OK,
+    WATCHDOG_INFO => NAGIOS_STATUS_OK,
+    WATCHDOG_NOTICE => NAGIOS_STATUS_OK,
+    WATCHDOG_WARNING => NAGIOS_STATUS_WARNING,
+    WATCHDOG_ERROR => NAGIOS_STATUS_CRITICAL,
+    WATCHDOG_CRITICAL => NAGIOS_STATUS_CRITICAL,
+    WATCHDOG_ALERT => NAGIOS_STATUS_CRITICAL,
+    WATCHDOG_EMERG => NAGIOS_STATUS_CRITICAL
+  );
+
+  $severity = NAGIOS_STATUS_OK; //max this across the result set
+  $min_severity = variable_get('nagios_min_report_severity', NAGIOS_STATUS_WARNING);
+  $messages = array();
+  $descriptions = array();
+  $count = 0;
+  while ($row = $result->fetchAssoc()) {
+    // Set timestamp of the first watchdog error for use when restricting logs to only new entries.
+    if ($count == 0) {
+      $limit_watchdog_timestamp = variable_set('limit_watchdog_timestamp', $row['timestamp']);
+      $count++;
+    }
+
+    // Get severity of log entry.
+    $nagios_severity = $severity_translation[$row['severity']];
+
+    // Only continue if severity is greater then the min severity set.
+    if ($nagios_severity < $min_severity) {
+      continue;
+    }
+
+    // If the severity is greater then our current severity level, set it it to new level.
+    if ($nagios_severity > $severity) {
+      $severity = $nagios_severity;
+    }
+
+    // Create error message.
+    $message = "$row[type] $row[message]";
+    //@TODO Untangle l(truncate_utf8(_dblog_format_message($dblog), 56, TRUE, TRUE), 'admin/reports/event/'. $dblog->wid, array('html' => TRUE)) and use it here
+    $variables = unserialize($row['variables']);
+    if (is_array($variables)){
+      foreach($variables as $key => $value){
+        $message = str_replace("$key", $value, $message);
+      }
+    }
+
+    // Add message to messages array only if there isn't already an identical entry.
+    if (!in_array($message, $messages)) {
+      $messages[] = $message;
+    }
+    else {
+      // We only want to show each message once so continue.
+      continue;
+    }
+
+    // Prepend the timestamp onto the front of the message.
+    $message = date('Y-m-d H:i:s', $row['timestamp']) . " " . $message;
+
+    // Add message to descriptions array.
+    $descriptions[] = $message;
+
+  }
+
+  // Join all descriptions together into a string.
+  $desc = join(', ', $descriptions);
+
+  //why is an extra array wrapped around here?
+  return array(
+    'key' => 'WATCHDOG',
+    'data' => array(
+      'status' => $severity,
+      'type' => 'state',
+      'text' => t('@desc', array('@desc' => $desc)) //These watchdog message have translations? Really???
+    )
   );
 }
 

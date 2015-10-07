@@ -25,7 +25,7 @@ function nagios_status() {
  * Functions to be performed by the base nagios module.
  */
 function nagios_functions() {
-  return array(
+  $functions = array(
     'requirements' => t('Checking of hook_requirements. This includes the following: module updates, database schema, files directory writability, update.php protected, Lots of other good stuff ...'),
     'watchdog' => t('Check recent watchdog entries'),
     'cron' => t('Check whether cron has been running regularly'),
@@ -36,6 +36,10 @@ function nagios_functions() {
     'modules' => t('Check the number of modules for nagios performance data'),
     'themes' => t('Check the number of themes for nagios performance data'),
   );
+  if(module_exists('elysia_cron')) {
+    $functions['elysia_cron'] = t('Check whether elysia cron has been running regularly');
+  }
+  return $functions;
 }
 
 /**
@@ -416,6 +420,15 @@ function nagios_nagios_settings() {
     '#default_value' => variable_get('nagios_cron_duration', 60),
     '#description' => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.'),
   );
+
+  if(module_exists('elysia_cron')) {
+    $form[$group]['nagios_elysia_cron_duration'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Elysia cron duration'),
+      '#default_value' => variable_get('nagios_elysia_cron_duration', 60),
+      '#description' => t('Issue a critical alert when elysia cron has not been running for this duration (in minutes). Default is 60 minutes.'),
+    );
+  }
 
   $form[$group]['nagios_min_report_severity'] = array(
     '#type' => 'select',
@@ -877,6 +890,45 @@ function nagios_check_cron() {
 
   return array(
     'key' => 'CRON',
+    'data' => $data,
+  );
+}
+
+/**
+ * Check when the Drupal cron system was last invoked.
+ *
+ * @return Array
+ */
+function nagios_check_elysia_cron() {
+  $result = db_query('select * from elysia_cron where last_aborted <> 0');
+  $err_crons = array();
+  foreach ($result as $blocked_cron) {
+    $err_crons[] = $blocked_cron;
+  }
+  $text = '';
+  foreach($err_crons as $cron) {
+    $text .= t('Elysia cron ":cron" last aborted on ":abort"' . PHP_EOL,array(
+      ':cron' => $cron->name,
+      ':abort' => $cron->last_abort_function,
+    ));
+  }
+  if (!empty($err_crons)) {
+    $data = array(
+      'status' => NAGIOS_STATUS_CRITICAL,
+      'type' => 'state',
+      'text' => $text,
+    );
+  }
+  else {
+    $data = array(
+      'status' => NAGIOS_STATUS_OK,
+      'type' => 'state',
+      'text' => '',
+    );
+  }
+
+  return array(
+    'key' => 'ELYSIA_CRON',
     'data' => $data,
   );
 }

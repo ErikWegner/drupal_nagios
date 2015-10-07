@@ -1,6 +1,8 @@
 
 Copyright 2009 Khalid Baheyeldin http://2bits.com
 Drush commands originally authored by Josh Waihi http://joshwaihi.com
+Maintained by Code Enigma https://www.codeenigma.com
+
 
 Description
 -----------
@@ -26,9 +28,9 @@ may be overkill for this task.
 There are also drush commands to allow you to execute Nagios plugins on remote
 Linux/Unix machines using NRPE.
 
+
 Security Note
 -------------
-
 This module exposes the following information from your web site:
 - The number of published nodes.
 - The number of active users.
@@ -39,8 +41,13 @@ To mitigate the security risks involve, make sure you use a unique ID. However, 
 not a fool proof solution. If you are concerned about this information being publicly
 accessible, then don't use this module.
 
+For additional security, you may also put the Nagios module status page behind http 
+authentication, which is recommended. If you do this, we recommend it is done via a 
+HTTPS connection. While plain HTTP will work, plaintext credentials are never advisable.
+
 If you can run NRPE then it is recommended you disable Nagios checks via Drupal and only
-use NRPE checks via drush instead as a security enhancement.
+use NRPE checks via drush instead as a security enhancement. This is the best method.
+
 
 Installation
 ------------
@@ -54,9 +61,9 @@ To install this module, do the following:
 3. Optional, to enable Nagios NRPE download and read the documentation at
    http://nagios.sourceforge.net/docs/nrpe/NRPE.pdf
 
+
 Configuration for Drupal
 ------------------------
-
 To enable this module do the following:
 
 1. Go to Admin -> Build -> Modules
@@ -68,9 +75,9 @@ To enable this module do the following:
 
    Don't forget to configure Nagios accordingly. See below.
 
+
 Configuration for Nagios
 ------------------------
-
 The exact way to configure Nagios depends on several factors, e.g. how many Drupal
 sites you want to monitor, the way Nagios is setup, ...etc.
 
@@ -169,7 +176,6 @@ Here is an explanation of some of the options:
 
 Configuration for NRPE
 ----------------------
-
 See http://nagios.sourceforge.net/docs/nrpe/NRPE.pdf for details on how to set up NRPE checks.
 
 Here is a basic example of checking cron is running.
@@ -201,7 +207,6 @@ lot of issues making this work.
 
 API
 ---
-
 This module provides an API for other modules to report status back to Nagios.
 See nagios.api.php for examples of the hooks and documentation.
 

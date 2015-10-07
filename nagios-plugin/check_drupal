@@ -29,9 +29,10 @@ else
 fi
 
 print_usage() {
-  $ECHO "Usage: $PROGNAME -U unique_id [ -H host_name ] [ -P path_to_nagios_status_page ] [ -t time_out_seconds ]"
-  $ECHO "Usage: $PROGNAME --help"
-  $ECHO "Usage: $PROGNAME --version"
+  $ECHO "Usage:\n"
+  $ECHO "  $PROGNAME -U unique_id [ -H host_name ] [ -P path_to_nagios_status_page ] [ -t time_out_seconds ] [ --http-user user --http-password password ]\n"
+  $ECHO "  $PROGNAME --help\n"
+  $ECHO "  $PROGNAME --version\n"
 }
 
 print_help() {
@@ -132,7 +133,7 @@ fi
 if $SSL; then
   CMD="$WGET --no-check-certificate -S -T $timeout -O - --http-user=$httpuser --http-password=$httppassword -U $unique_id https://$hostname/$path"
 else
-  CMD="$WGET -S -T $timeout -O - -U $unique_id http://$hostname/$path"
+  CMD="$WGET -S -T $timeout -O - --http-user=$httpuser --http-password=$httppassword -U $unique_id http://$hostname/$path"
 fi
 
 $CMD > $temp 2>&1
@@ -141,24 +142,21 @@ RC=$?
 # When using http authentication wget always waits until it receives a 401 before sending the password. 
 # Therefore the first header should be stripped off
 if [ "$httppassword" != "" ]; then
-  temp2=`mktemp`
-  $GREP -v 'HTTP/1.1 401 Authorization Required' $temp > $temp2
-  $CP $temp2 $temp
-  $RM -f $temp2
+  ex -s +"g/HTTP\/1.1 401/d" -cwq $temp
 fi
 
 HTTP=`$GREP "HTTP/1" $temp`
 
 if [ "$RC" != 0 ]; then
   $ECHO "wget error: $RC: when accessing $hostname/$path. HTTP: $HTTP"
-  $RM -f $temp
+  $RM "$temp"
   exit $STATE_UNKNOWN
 fi
 
 HTTP_CODE=`$ECHO "$HTTP" | awk '{print $2}'`
 if [ "$HTTP_CODE" != "200" ]; then
   $ECHO "HTTP returned an error code. HTTP: $HTTP"
-  $RM -f $temp
+  $RM "$temp"
   exit $STATE_UNKNOWN
 fi
 
@@ -187,6 +185,6 @@ esac
 # Send the data
 $ECHO "DRUPAL $DATA"
 
-$RM -f $temp
+$RM "$temp"
 
 exit $exitstatus

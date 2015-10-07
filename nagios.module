@@ -322,6 +322,7 @@ function nagios_status_page() {
             $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
             $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
             $outdated_count = 0;
+            $tmp_modules = '';
             foreach ($tmp_projects as $projkey => $projval) {
               if (!isset($nagios_ignored_projects[$projkey])) {
                 if ($projval['status'] < UPDATE_CURRENT && $projval['status'] >= UPDATE_NOT_SECURE) {

@@ -104,9 +104,11 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
   if ($available = update_get_available(TRUE)) {
     module_load_include('inc', 'update', 'update.compare');
     $data = update_calculate_project_data($available);
-    // Unset any data referencing modules we're not interested in.
+    // Unset any data referencing projects we're not interested in.
     $nagios_ignored_modules = variable_get('nagios_ignored_modules', array());
-    foreach ($nagios_ignored_modules as $key => $value) {
+    $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
+    $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
+    foreach ($nagios_ignored_projects as $key => $value) {
       if ($value == TRUE && isset($data[$key])) {
         unset($data[$key]);
       }

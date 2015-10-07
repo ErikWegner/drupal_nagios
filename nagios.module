@@ -303,9 +303,11 @@ function nagios_status_page() {
             ) {
             $tmp_projects = update_calculate_project_data(update_get_projects());
             $nagios_ignored_modules = variable_get('nagios_ignored_modules', array());
+            $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
+            $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
             $outdated_count = 0;
             foreach ($tmp_projects as $projkey => $projval) {
-              if (!isset($nagios_ignored_modules[$projkey])) {
+              if (!isset($nagios_ignored_projects[$projkey])) {
                 if ($projval['status'] < UPDATE_CURRENT && $projval['status'] >= UPDATE_NOT_SECURE) {
                   switch ($projval['status']) {
                     case UPDATE_NOT_SECURE:
@@ -426,7 +428,6 @@ function nagios_nagios_settings() {
   return $form;
 }
 
-
 /**
  * Implements hook_form_FORMID_alter().
  *
@@ -486,6 +487,68 @@ function nagios_system_modules_form_submit(&$form, &$form_state) {
 }
 
 /**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Modify the module display view by adding a nagios ignore link to every module
+ * description.
+ */
+function nagios_form_system_theme_settings_alter(&$form, &$form_state, $form_id) {
+  if (!user_access('administer nagios ignore') || isset($form['confirm'])) {
+    return;
+  }
+
+  // Grab the name of the theme.
+  if (isset($form_state['build_info']['args'][0]) && !empty($form_state['build_info']['args'][0])) {
+      $theme_name = check_plain($form_state['build_info']['args'][0]);
+
+    $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
+
+    // Check to see if the theme is provided by core, or if it's contrib/custom.
+    $projects_data = update_get_projects();
+    if (array_key_exists($theme_name, $projects_data)) {
+      // This is a settings page for a non-core theme, so add the checkbox.
+
+      $form['nagios'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Nagios Monitoring'),
+        'nagios_ignore' => array(
+          '#type' => 'checkbox',
+          '#title' => t('Ignore from Nagios'),
+          '#weight' => 200,
+          '#default_value' => isset($nagios_ignored_themes[$theme_name]) && $nagios_ignored_themes[$theme_name] ? TRUE : FALSE,
+        ),
+      );
+
+      $form['#submit'][] = 'nagios_system_theme_settings_form_submit';
+    }
+  }
+}
+
+/**
+ * Additional system theme settings form submit handler.
+ *
+ * Saves the Nagios theme ignore status to the 'nagios_ignored_themes' variable.
+ * Variable contains an array of theme names to be ignored in the form
+ * 'theme_machine_name' => TRUE
+ */
+function nagios_system_theme_settings_form_submit(&$form, &$form_state) {
+  // Grab the name of the theme.
+  if (isset($form_state['build_info']['args'][0]) && !empty($form_state['build_info']['args'][0])) {
+    $theme_name = check_plain($form_state['build_info']['args'][0]);
+    $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
+
+    if (isset($form_state['values']['nagios_ignore']) && $form_state['values']['nagios_ignore']) {
+      $nagios_ignored_themes[$theme_name] = TRUE;
+    }
+    else {
+      unset($nagios_ignored_themes[$theme_name]);
+    }
+
+    variable_set('nagios_ignored_themes', $nagios_ignored_themes);
+  }
+}
+
+/**
  * Implements hook_nagios().
  */
 function nagios_nagios() {
@@ -526,12 +589,14 @@ function nagios_check_requirements() {
 
   $project_data = update_get_projects();
   $nagios_ignored_modules = variable_get('nagios_ignored_modules', array());
+  $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
+  $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
 
   $enabled_modules = array();
 
   foreach ($project_data as $project) {
     foreach($project['includes'] as $key => $val) {
-      if (!isset($nagios_ignored_modules[$key])) {
+      if (!isset($nagios_ignored_projects[$key])) {
         $enabled_modules[] = $key;
       }
     }
@@ -546,7 +611,7 @@ function nagios_check_requirements() {
     $data = update_calculate_project_data($available);
   }
   // Remove from the update data array the projects ignored.
-  foreach ($nagios_ignored_modules as $key => $value) {
+  foreach ($nagios_ignored_projects as $key => $value) {
     unset($data[$key]);
   }
 

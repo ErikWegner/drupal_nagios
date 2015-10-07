@@ -69,6 +69,18 @@ function nagios_menu() {
 }
 
 /**
+ * Implements hook_menu_site_status_alter().
+ *
+ * Make the status page available when Drupal is in
+ * maintenance mode.
+ */
+function nagios_menu_site_status_alter(&$menu_site_status, $path) {
+  if ($menu_site_status == MENU_SITE_OFFLINE && $path == variable_get('nagios_page_path', 'nagios')) {
+    $menu_site_status = MENU_SITE_ONLINE;
+  }
+}
+
+/**
  * Implements hook_permission().
  */
 function nagios_permission() {

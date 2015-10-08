@@ -118,16 +118,14 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
 
     $updates = nagios_updates($data);
     if (count($updates)) {
-      if ($update_type && $update_type == 'security') {
-        foreach ($updates as $project_name => $update_info) {
-          if ($update_info['status'] == UPDATE_NOT_SECURE) {
-            $flag_insecure = TRUE;
-            $module_list[] = $project_name;
-          }
+      foreach ($updates as $project_name => $update_info) {
+        // In any case we need to flag security updates.
+        if ($update_info['status'] == UPDATE_NOT_SECURE) {
+          $flag_insecure = TRUE;
+          $module_list[] = $project_name;
         }
-      }
-      else {
-        foreach ($updates as $project_name => $update_info) {
+        // If type is 'security' we don't want a full list.
+        elseif ($update_type && $update_type == 'all') {
           $module_list[] = $project_name;
         }
       }

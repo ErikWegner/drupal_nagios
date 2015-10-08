@@ -56,7 +56,7 @@ function nagios_menu() {
     'access arguments' => array('administer site configuration'),
   );
 
-  $path = variable_get('nagios_page_path', 'nagios');
+  $path = variable_get('nagios_page_path', 'nagios-status');
   $callback = variable_get('nagios_page_callback', 'nagios_status_page');
   $items[$path] = array(
     'type' => MENU_SUGGESTED_ITEM,
@@ -75,7 +75,7 @@ function nagios_menu() {
  * maintenance mode.
  */
 function nagios_menu_site_status_alter(&$menu_site_status, $path) {
-  if ($menu_site_status == MENU_SITE_OFFLINE && $path == variable_get('nagios_page_path', 'nagios')) {
+  if ($menu_site_status == MENU_SITE_OFFLINE && $path == variable_get('nagios_page_path', 'nagios-status')) {
     $menu_site_status = MENU_SITE_ONLINE;
   }
 }
@@ -126,7 +126,7 @@ function nagios_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' =>   t('Nagios page path'),
     '#description' => t('Enter the path for the Nagios HTTP status page. It must be a valid Drupal path.'),
-    '#default_value' => variable_get('nagios_page_path', 'nagios'),
+    '#default_value' => variable_get('nagios_page_path', 'nagios-status'),
   );
   $form['nagios_status_page']['nagios_page_callback'] = array(
     '#type' => 'textfield',

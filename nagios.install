@@ -41,3 +41,12 @@ function nagios_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Set variable for altered status page path, if required.
+ */
+function nagios_update_7001() {
+  if (variable_get('nagios_page_path', 'nagios') == 'nagios') {
+    variable_set('nagios_page_path', 'nagios');
+  }
+}

@@ -1,5 +1,5 @@
 nagios.settings:
-    path: '/admin/settings/nagios'
+    path: '/admin/config/system/nagios'
     defaults:
         _form: '\Drupal\nagios\Form\SettingsForm'
         _title: 'Nagios monitoring'

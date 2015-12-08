@@ -8,7 +8,7 @@
 namespace Drupal\nagios\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Cache\CacheableResponse;
+use Drupal\Core\Render\HtmlResponse ;
 
 class StatuspageController extends ControllerBase {
 
@@ -53,7 +53,7 @@ class StatuspageController extends ControllerBase {
     $output .= implode(', ', $output_state) . ' | ' . implode(';', $output_perf) . "\n";
 
 
-    $response = new CacheableResponse($output, 200);
+    $response = new HtmlResponse($output, 200);
     
     // Disable browser cache
     $response->setMaxAge(0);

@@ -1,0 +1,15 @@
+nagios.settings:
+    path: '/admin/settings/nagios'
+    defaults:
+        _form: '\Drupal\nagios\Form\SettingsForm'
+        _title: 'Nagios monitoring'
+    requirements:
+        _permission: 'administer site configuration'
+
+nagios.statuspage:
+    path: '/nagios'
+    defaults:
+        _controller: 'Drupal\nagios\Controller\StatuspageController::content'
+        _title: 'Nagios Status'
+    requirements:
+        _permission: 'access content'

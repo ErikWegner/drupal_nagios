@@ -1,6 +1,7 @@
 <?php 
 
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
+// 2015 Erik Wegner
 
 // Defines to be used by this modules and others that use its hook_nagios()
 define('NAGIOS_STATUS_OK',       0);
@@ -41,136 +42,15 @@ function nagios_functions() {
 }
 
 /**
- * Implementation of hook_menu
- */
-function nagios_menu() {
-  $items = array();
-  $items['admin/settings/nagios'] = array(
-    'type'               => MENU_NORMAL_ITEM,
-    'title'              => t('Nagios monitoring'),
-    'description'        => t('Settings for Nagios monitoring'),
-    'page callback'      => 'drupal_get_form',
-    'page arguments'     => array('nagios_settings'),
-    'access arguments'   => array('administer site configuration'),
-  );
-
-  $items['nagios'] = array(
-    'type'               => MENU_SUGGESTED_ITEM,
-    'title'              => t('Nagios status page'),
-    'page callback'      => 'nagios_status_page',
-    'access callback'    => TRUE,
-  );
-  return $items;
-}
-
-/**
- * Callback for the settings page
- */
-function nagios_settings() {
-  $group = 'modules';
-
-  $form['nagios_ua'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Unique ID'),
-    '#default_value' => variable_get('nagios_ua', 'Nagios'),
-    '#description'   => t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
-  );
-
-  $form[$group] = array(
-    '#type'        => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed'   => FALSE,
-    '#title'       => t('Modules'),
-    '#description' => t('Select the modules that should report their data into Nagios.'),
-  );
-
-  foreach(nagios_invoke_all('nagios_info') as $module => $data) {
-    $form[$group]['nagios_enable_' . $module] = array(
-      '#type'          => 'checkbox',
-      '#title'         => $data['name'] . ' (' . $module . ')',
-      '#default_value' => variable_get('nagios_enable_' . $module, TRUE),
-    );
-  }
-
-  foreach(nagios_invoke_all('nagios_settings') as $module => $module_settings) {
-    $form[$module] = array(
-      '#type'        => 'fieldset',
-      '#collapsible' => TRUE,
-      '#collapsed'   => TRUE,
-      '#title'       => $module,
-    );
-
-    foreach($module_settings as $element => $data) {
-      $form[$module][$element] = $data;
-    }
-  }
-
-  return system_settings_form($form);
-}
-
-/**
- * Callback for the nagios status page
- */
-function nagios_status_page() {
-  header("Pragma: no-cache");
-  header("Expires: 0");
-
-  $codes = nagios_status();
-
-  $nagios_data = nagios_invoke_all('nagios');
-
-  // Find the highest level to be the overall status
-  $severity = NAGIOS_STATUS_OK;
-
-  foreach($nagios_data as $module_name => $module_data) {
-    foreach($module_data as $key => $value) {
-      $severity = max($severity, $value['status']);
-    }
-  }
-
-  // Identifier that we check on the other side
-  $output = "\n" . 'nagios=' . $codes[$severity] . ', ';
-
-  $output_state = array();
-  $output_perf  = array();
-
-  foreach($nagios_data as $module_name => $module_data) {
-    foreach($module_data as $key => $value) {
-      switch($value['type']) {
-        case 'state':
-          $tmp_state = $key . ':' . $codes[$value['status']];
-          if (!empty($value['text'])) {
-            $tmp_state .= '=' . $value['text'];
-          }
-          $output_state[] = $tmp_state;
-          break;
-
-        case 'perf':
-          $output_perf[]  = $key . '=' . $value['text'];
-          break;
-      }
-    }
-  }
-
-  $output .= implode(', ', $output_state) . ' | ' . implode(';', $output_perf) . "\n";
-
-  // Print the output, so we test the theme
-  print theme('page', $output);
-
-  // Exit early so we do not cache the data, nor do we wrap the result in a theme
-  exit();
-}
-
-/**
  * Custom invoke function
  */
 function nagios_invoke_all($hook = 'nagios') {
   // This is a custom invoke function that returns a keyed array
   $return = array();
   $args = func_get_args();
-  foreach (module_implements($hook) as $module) {
-    $function = $module .'_'. $hook;
-    $result = call_user_func_array($function, $args);
+  $moduleHandler = \Drupal::moduleHandler();
+  foreach ($moduleHandler->getImplementations($hook) as $module) {
+    $result = $moduleHandler->invoke($module, $hook, $args);
     $return[$module] = $result;
   }
 
@@ -188,44 +68,12 @@ function nagios_nagios_info() {
 }
 
 /**
- * Implementation of hook_nagios_settings()
- */
-function nagios_nagios_settings() {
-  foreach(nagios_functions() as $function => $description) {
-    $var = 'nagios_func_' . $function;
-    $form[$var] = array(
-      '#type'          => 'checkbox',
-      '#title'         => $function,
-      '#default_value' => variable_get($var, TRUE),
-      '#description' => $description,
-    );
-  }
-
-  $group = 'thresholds';
-  $form[$group] = array(
-    '#type'        => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed'   => FALSE,
-    '#title'       => t('Thresholds'),
-    '#description' => t('Thresholds for reporting critical alerts to Nagios.'),
-  );
-
-  $form[$group]['nagios_cron_duration'] = array(
-    '#type'          => 'textfield',
-    '#title'         => t('Cron duration'),
-    '#default_value' => variable_get('nagios_cron_duration', 60),
-    '#description'   => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.')
-  );
-
-  return $form;
-}
-
-/**
  * Implementation of hook_nagios
  */
 function nagios_nagios() {
   // Check the unique ID string first
-  $ua = variable_get('nagios_ua', 'Nagios');
+  $config = \Drupal::config();
+  $ua = $config->get('nagios_ua');
   if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
     // This is not an authorized unique id, so do not send information out
     return array(

@@ -1,0 +1,4 @@
+services:
+  nagios.settings:
+    class: Drupal\nagios\Form\SettingsForm
+    arguments: ['@module_handler']

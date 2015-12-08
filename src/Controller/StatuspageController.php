@@ -8,7 +8,7 @@
 namespace Drupal\nagios\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Render\HtmlResponse ;
+use Symfony\Component\HttpFoundation\Response;
 
 class StatuspageController extends ControllerBase {
 
@@ -51,17 +51,12 @@ class StatuspageController extends ControllerBase {
     }
 
     $output .= implode(', ', $output_state) . ' | ' . implode(';', $output_perf) . "\n";
-
-
-    $response = new HtmlResponse($output, 200);
+    
+    $response = new Response($output, Response::HTTP_OK, ['Content-Type' => 'text/plain']);
     
     // Disable browser cache
     $response->setMaxAge(0);
     $response->setExpires($date);
-    
-    // Disable Drupal cache
-    $cacheableMetadata = $response->getCacheableMetadata();
-    $cacheableMetadata->setCacheMaxAge(0);
     
     return $response;
   }

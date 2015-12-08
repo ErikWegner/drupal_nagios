@@ -104,9 +104,8 @@ function nagios_check_requirements() {
 
   // Get the run-time requirements and status information.
   $moduleHandler = \Drupal::service('module_handler');
-  //$reqs = $moduleHandler->invokeAll('requirements', array('runtime'));
-  $reqs = array();
-
+  $reqs = $moduleHandler->invokeAll('requirements', array('runtime'));
+  
   // Check the requirements as to the most severe status
   $severity = REQUIREMENT_OK;
   foreach ($reqs as $key => $requirement) {

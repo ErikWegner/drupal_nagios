@@ -4,6 +4,7 @@ nagios:
         warning: 1
         critical: 2
         unknown: 3
+    min_report_severity: 1
     ua: 'Nagios'	
     statuspage:
         path: 'nagios'

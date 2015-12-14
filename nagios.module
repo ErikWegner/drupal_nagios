@@ -56,7 +56,13 @@ function nagios_invoke_all($hook = 'nagios') {
   $return = array();
   $args = func_get_args();
   $moduleHandler = \Drupal::moduleHandler();
+  $config = \Drupal::config('nagios.settings');
   foreach ($moduleHandler->getImplementations($hook) as $module) {
+    // if we're running the checks, see if the checks for that module
+    // are enabled, otherwise just continue
+    if ($hook == 'nagios' && $config->('nagios.enable.' . $module) == 0 {
+      continue;
+    }
     $result = $moduleHandler->invoke($module, $hook, $args);
     $return[$module] = $result;
   }

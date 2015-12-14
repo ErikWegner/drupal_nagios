@@ -158,10 +158,24 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('nagios.settings');
-    $config->set('nagios_ua', $form_state->getValue('nagios_ua'));
+    $config->set('nagios.ua', $form_state->getValue('nagios_ua'));
+    $config->set('nagios.show_outdated_names', $form_state->getValue('nagios_show_outdated_names'));
+    $config->set('nagios.statuspage.enabled', $form_state->getValue('nagios_enable_status_page'));
+    $config->set('nagios.statuspage.path', $form_state->getValue('nagios_page_path'));
+    $config->set('nagios.statuspage.controller', $form_state->getValue('nagios_page_controller'));
+    $config->set('nagios.statuspage.getparam', $form_state->getValue('nagios_enable_status_page_get'));
+    $config->set('nagios.status.ok', $form_state->getValue('nagios_status_ok_value'));
+    $config->set('nagios.status.warning', $form_state->getValue('nagios_status_warning_value'));
+    $config->set('nagios.status.critical', $form_state->getValue('nagios_status_critical_value'));
+    $config->set('nagios.status.unknown', $form_state->getValue('nagios_status_unknown_value'));
+    
     foreach (nagios_invoke_all('nagios_info') as $module => $data) {
       $config->set('nagios_enable_' . $module, $form_state->getValue('nagios_enable_' . $module));
     }
+    
+    $config->set('nagios.limit_watchdog.display', $form_state->getValue('limit_watchdog_display'));
+    $config->set('nagios.limit_watchdog.results', $form_state->getValue('limit_watchdog_results'));
+    
     $config->save();
   }
 

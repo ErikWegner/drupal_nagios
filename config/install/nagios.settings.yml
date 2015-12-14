@@ -1,9 +1,9 @@
 nagios:
     status:
         ok: 0
-        unknown: 1
-        warning: 2
-        critical: 3
+        warning: 1
+        critical: 2
+        unknown: 3
     ua: 'Nagios'	
     statuspage:
         path: 'nagios'

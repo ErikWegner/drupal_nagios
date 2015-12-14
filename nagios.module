@@ -1,13 +1,15 @@
 <?php
 
+use \Drupal\Core\Extension\ModuleHandlerInterface;
+
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 // 2015 Erik Wegner
 
 // Defines to be used by this modules and others that use its hook_nagios()
-define('NAGIOS_STATUS_OK',       0);
-define('NAGIOS_STATUS_UNKNOWN',  1);
-define('NAGIOS_STATUS_WARNING',  2);
-define('NAGIOS_STATUS_CRITICAL', 3);
+define('NAGIOS_STATUS_OK',       \Drupal::config('nagios.settings')->get('nagios.status.ok'));
+define('NAGIOS_STATUS_UNKNOWN',  \Drupal::config('nagios.settings')->get('nagios.status.unknown'));
+define('NAGIOS_STATUS_WARNING',  \Drupal::config('nagios.settings')->get('nagios.status.warning'));
+define('NAGIOS_STATUS_CRITICAL', \Drupal::config('nagios.settings')->get('nagios.status.critical'));
 
 /**
  * Mapping of defines to text strings that Nagios understands
@@ -25,9 +27,9 @@ function nagios_status() {
  * Functions to be performed by the base nagios module.
  */
 function nagios_functions() {
-  return array(
+  $functions = array(
     'requirements' => t('Checking of hook_requirements. This includes the following: module updates, database schema, files directory writability, update.php protected, Lots of other good stuff ...'),
-
+    'watchdog' => t('Check recent watchdog entries'),
     'cron' => t('Check whether cron has been running regularly'),
 
     'session_anon' => t('Check the number of anonymous sessions for nagios performance data'),
@@ -39,6 +41,11 @@ function nagios_functions() {
     'modules' => t('Check the number of modules for nagios performance data'),
     'themes'  => t('Check the number of themes for nagios performance data'),
   );
+  $moduleHandler = \Drupal::moduleHandler();
+  if($moduleHandler->moduleExists('elysia_cron')) {
+    $functions['elysia_cron'] = t('Check whether elysia cron has been running regularly');
+  }
+  return $functions;
 }
 
 /**
@@ -73,7 +80,7 @@ function nagios_nagios_info() {
 function nagios_nagios() {
   // Check the unique ID string first
   $config = \Drupal::config('nagios.settings');
-  $ua = $config->get('nagios_ua');
+  $ua = $config->get('nagios.ua');
   if ($_SERVER['HTTP_USER_AGENT'] != $ua) {
     // This is not an authorized unique id, so do not send information out
     return array(

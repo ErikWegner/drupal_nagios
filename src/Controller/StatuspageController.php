@@ -9,6 +9,7 @@ namespace Drupal\nagios\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Route;
 
 class StatuspageController extends ControllerBase {
 
@@ -61,4 +62,29 @@ class StatuspageController extends ControllerBase {
     return $response;
   }
 
+  public function routes() {
+    $config = \Drupal::config('nagios.settings');
+    $routes = array();
+    // Declares a single route under the name 'example.content'.
+    // Returns an array of Route objects. 
+    $routes['nagios.statuspage'] = new Route(
+      // Path to attach this route to:
+      $config->get('nagios.statuspage.path'),
+      // Route defaults:
+      array(
+        '_controller' => $config->get('nagios.statuspage.controller'),
+        '_title' => 'Nagios Status'
+      ),
+      // Route requirements:
+      array(
+        '_custom_access' => '\Drupal\nagios\Controller\StatuspageController::access'
+      )
+    );
+    return $routes;
+  }
+  
+  public function access() {
+    $config = \Drupal::config('nagios.settings');
+    return $config->get('nagios.statuspage.enabled') === 1;
+  }
 }

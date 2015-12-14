@@ -6,10 +6,5 @@ nagios.settings:
     requirements:
         _permission: 'administer site configuration'
 
-nagios.statuspage:
-    path: '/nagios'
-    defaults:
-        _controller: 'Drupal\nagios\Controller\StatuspageController::content'
-        _title: 'Nagios Status'
-    requirements:
-        _permission: 'access content'
+route_callbacks:
+    - '\Drupal\nagios\Controller\StatuspageController::routes'

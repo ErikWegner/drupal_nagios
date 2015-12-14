@@ -11,6 +11,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 class SettingsForm extends ConfigFormBase {
+
   /**
    * {@inheritdoc}
    */
@@ -28,8 +29,77 @@ class SettingsForm extends ConfigFormBase {
     $form['nagios_ua'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Unique ID'),
-      '#default_value' => $config->get('nagios_ua'),
+      '#default_value' => $config->get('nagios.ua'),
       '#description' => $this->t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.')
+    );
+
+    $form['nagios_show_outdated_names'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show outdated module/theme name?'),
+      '#default_value' => $config->get('nagios.show_outdated_names'),
+    );
+
+    $form['nagios_status_page'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#title' => t('Status page settings'),
+      '#description' => t('Control the availability and location of the HTTP status page. NOTE: you must clear the menu cache for changes to these settings to register.'),
+    );
+    $form['nagios_status_page']['nagios_enable_status_page'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable status page?'),
+      '#default_value' => $config->get('nagios.statuspage.enabled'),
+    );
+    $form['nagios_status_page']['nagios_page_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Nagios page path'),
+      '#description' => t('Enter the path for the Nagios HTTP status page. It must be a valid Drupal path.'),
+      '#default_value' => $config->get('nagios.statuspage.path'),
+    );
+    $form['nagios_status_page']['nagios_page_controller'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Nagios page controller'),
+      '#description' => t('Enter the name of the controller and function to be used by the Nagios status page. Take care and be sure this function exists before clearing the menu cache!'),
+      '#default_value' => $config->get('nagios.statuspage.controller'),
+    );
+    $form['nagios_status_page']['nagios_enable_status_page_get'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable Unique ID checking via URL on status page?'),
+      '#default_value' => $config->get('nagios.statuspage.getparam'),
+      '#description' => t('If enabled the $_GET variable "unique_id" is used for checking the correct Unique ID instead of "User Agent" ($_SERVER[\'HTTP_USER_AGENT\']). This alternative checking is only working if the URL is containing the value like "/nagios?unique_id=*****". This feature is useful to avoid webserver stats with the Unique ID as "User Agent" and helpful for human testing.'),
+    );
+
+    $form['nagios_error_levels'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#title' => t('Error levels'),
+      '#description' => t('Set the values to be used for error levels when reporting to Nagios.'),
+    );
+    $form['nagios_error_levels']['nagios_status_ok_value'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Status OK'),
+      '#description' => t('The value to send to Nagios for a Status OK message.'),
+      '#default_value' => $config->get('nagios.status.ok'),
+    );
+    $form['nagios_error_levels']['nagios_status_warning_value'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Warning'),
+      '#description' => t('The value to send to Nagios for a Warning message.'),
+      '#default_value' => $config->get('nagios.status.warning'),
+    );
+    $form['nagios_error_levels']['nagios_status_critical_value'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Critical'),
+      '#description' => t('The value to send to Nagios for a Critical message.'),
+      '#default_value' => $config->get('nagios.status.critical'),
+    );
+    $form['nagios_error_levels']['nagios_status_unknown_value'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Unknown'),
+      '#description' => t('The value to send to Nagios for an Unknown message.'),
+      '#default_value' => $config->get('nagios.status.unknown')
     );
 
     $form[$group] = array(
@@ -48,6 +118,26 @@ class SettingsForm extends ConfigFormBase {
       );
     }
 
+    $form['watchdog'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#title' => t('Watchdog Settings'),
+      '#description' => t('Controls how watchdog messages are retreived and displayed when watchdog checking is set.'),
+    );
+    $form['watchdog']['limit_watchdog_display'] = array(
+      '#type' => 'checkbox',
+      '#title' => 'Limit watchdog display',
+      '#default_value' => $config->get('nagios.limit_watchdog.display'),
+      '#description' => t('Limit watchdog messages to only those that are new since the last check.'),
+    );
+    $form['watchdog']['limit_watchdog_results'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Limit watchdog logs',
+      '#default_value' => $config->get('nagios.limit_watchdog.results'),
+      '#description' => t('Limit the number of watchdog logs that are checked. E.G. 50 will only check the newest 50 logs.'),
+    );
+
     foreach (nagios_invoke_all('nagios_settings') as $module => $module_settings) {
       $form[$module] = array(
         '#type' => 'fieldset',
@@ -62,7 +152,7 @@ class SettingsForm extends ConfigFormBase {
     }
     return parent::buildForm($form, $form_state);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -74,7 +164,7 @@ class SettingsForm extends ConfigFormBase {
     }
     $config->save();
   }
-  
+
   protected function getEditableConfigNames() {
     return ['nagios.settings'];
   }

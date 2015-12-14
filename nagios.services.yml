@@ -2,3 +2,8 @@ services:
   nagios.settings:
     class: Drupal\nagios\Form\SettingsForm
     arguments: ['@module_handler']
+services:
+  nagios.maintenance_mode_subscriber:
+    class: Drupal\nagios\EventSubscriber\MaintenanceModeSubscriber
+    tags:
+      - { name: event_subscriber }

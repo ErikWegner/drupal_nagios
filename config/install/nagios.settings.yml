@@ -15,3 +15,5 @@ nagios:
     limit_watchdog:
         display: FALSE
         results: 50
+    cron_duration: 60
+    elysia_cron_duration: 60

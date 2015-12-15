@@ -60,7 +60,7 @@ function nagios_invoke_all($hook = 'nagios') {
   foreach ($moduleHandler->getImplementations($hook) as $module) {
     // if we're running the checks, see if the checks for that module
     // are enabled, otherwise just continue
-    if ($hook == 'nagios' && $config->('nagios.enable.' . $module) == 0 {
+    if ($hook == 'nagios' && $config->get('nagios.enable.' . $module) == 0) {
       continue;
     }
     $result = $moduleHandler->invoke($module, $hook, $args);
@@ -78,6 +78,60 @@ function nagios_nagios_info() {
     'name'   => 'Nagios monitoring',
     'id'     => 'NAGIOS',
   );
+}
+
+/**
+ * Implements hook_nagios_settings().
+ */
+function nagios_nagios_settings() {
+  $config = \Drupal::config('nagios.settings');
+  $moduleHandler = \Drupal::moduleHandler();
+  
+  foreach (nagios_functions() as $function => $description) {
+    $var = 'nagios_func_' . $function;
+    $cfgname = 'nagios.function.' . $function;
+    $form[$var] = array(
+      '#type' => 'checkbox',
+      '#title' => $function,
+      '#default_value' => $config->get(cfgname) ?: TRUE,
+      '#description' => $description,
+    );
+  }
+
+  $group = 'thresholds';
+  $form[$group] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#title' => t('Thresholds'),
+    '#description' => t('Thresholds for reporting critical alerts to Nagios.'),
+  );
+
+  $form[$group]['nagios_cron_duration'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Cron duration'),
+    '#default_value' => $config->get('nagios.cron_duration'),
+    '#description' => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.'),
+  );
+
+  if($moduleHandler->moduleExists('elysia_cron')) {
+    $form[$group]['nagios_elysia_cron_duration'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Elysia cron duration'),
+      '#default_value' => $config->get('nagios.elysia_cron_duration'),
+      '#description' => t('Issue a critical alert when elysia cron has not been running for this duration (in minutes). Default is 60 minutes.'),
+    );
+  }
+
+  $form[$group]['nagios_min_report_severity'] = array(
+    '#type' => 'select',
+    '#title' => t('Mininum report severity'),
+    '#default_value' => $config->get('nagios.min_report_severity'),
+    '#options' => nagios_status(),
+    '#description' => t('Issue an alert only for this minimum severity, not for lower severities.'),
+  );
+
+  return $form;
 }
 
 /**

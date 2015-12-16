@@ -19,6 +19,15 @@ class SettingsForm extends ConfigFormBase {
     return 'nagios_settings';
   }
 
+  /** 
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames() {
+    return [
+      'nagios.settings',
+    ];
+  }
+  
   /**
    * {@inheritdoc}
    */
@@ -148,6 +157,22 @@ class SettingsForm extends ConfigFormBase {
 
       foreach ($module_settings as $element => $data) {
         $form[$module][$element] = $data;
+        
+        // set #defaultvalue from #configname for first level form elements
+        if (!isset($data['#default_value']) && isset($data['#configname'])) {
+          $form[$module][$element]['#default_value'] = $config->get($data['#configname']);
+        }
+        
+        // set #defaultvalue from #configname for second level form elements
+        if (isset($data['#type']) && $data['#type'] == 'fieldset') {
+          foreach($data as $fieldsetelement => $fieldsetdata) {
+            if (is_array($fieldsetdata)) {
+              if (!isset($fieldsetdata['#default_value']) && isset($fieldsetdata['#configname'])) {
+                $form[$module][$element][$fieldsetelement]['#default_value'] = $config->get($fieldsetdata['#configname']);
+              }
+            }
+          }
+        }        
       }
     }
     return parent::buildForm($form, $form_state);
@@ -176,11 +201,28 @@ class SettingsForm extends ConfigFormBase {
     $config->set('nagios.limit_watchdog.display', $form_state->getValue('limit_watchdog_display'));
     $config->set('nagios.limit_watchdog.results', $form_state->getValue('limit_watchdog_results'));
     
+    foreach (nagios_invoke_all('nagios_settings') as $module => $module_settings) {
+      foreach ($module_settings as $element => $data) {       
+        // save config for first level form elements
+        if (isset($data['#configname'])) {
+          $config->set($data['#configname'], $form_state->getValue($element, $config->get($data['#configname'])));
+        }
+        
+        // save config for second level form elements
+        if (isset($data['#type']) && $data['#type'] == 'fieldset') {
+          foreach($data as $fieldsetelement => $fieldsetdata) {
+            if (is_array($fieldsetdata)) {
+              if (!isset($fieldsetdata['#default_value']) && isset($fieldsetdata['#configname'])) {
+                $config->set($fieldsetdata['#configname'], $form_state->getValue($fieldsetelement, $config->get($fieldsetdata['#configname'])));
+              }
+            }
+          }
+        }        
+      }
+    }
+    
     $config->save();
-  }
 
-  protected function getEditableConfigNames() {
-    return ['nagios.settings'];
+    parent::submitForm($form, $form_state);
   }
-
 }

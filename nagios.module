@@ -89,7 +89,7 @@ function nagios_nagios_settings() {
   
   foreach (nagios_functions() as $function => $description) {
     $var = 'nagios_func_' . $function;
-    $cfgname = 'nagios.function.' . $function;
+    $cfgname = 'function.' . $function;
     $form[$var] = array(
       '#type' => 'checkbox',
       '#title' => $function,
@@ -112,7 +112,7 @@ function nagios_nagios_settings() {
     '#type' => 'textfield',
     '#title' => t('Cron duration'),
     '#description' => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.'),
-    '#configname' => 'nagios.cron_duration',
+    '#configname' => 'cron_duration',
   );
 
   if($moduleHandler->moduleExists('elysia_cron')) {
@@ -120,7 +120,7 @@ function nagios_nagios_settings() {
       '#type' => 'textfield',
       '#title' => t('Elysia cron duration'),
       '#description' => t('Issue a critical alert when elysia cron has not been running for this duration (in minutes). Default is 60 minutes.'),
-      '#configname' => 'nagios.cron_duration',
+      '#configname' => 'elysia_cron_duration',
     );
   }
 
@@ -129,10 +129,140 @@ function nagios_nagios_settings() {
     '#title' => t('Mininum report severity'),
     '#options' => nagios_status(),
     '#description' => t('Issue an alert only for this minimum severity, not for lower severities.'),
-    '#configname' => 'nagios.min_report_severity',
+    '#configname' => 'min_report_severity',
   );
 
   return $form;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Modify the module display view by adding a nagios ignore link to every module
+ * description.
+ */
+function nagios_form_system_modules_alter(&$form, &$form_state, $form_id) {
+  if (!\Drupal::currentUser()->hasPermission('administer nagios ignore') || isset($form['confirm'])) {
+    return;
+  }
+
+  $config = \Drupal::config('nagios.settings');
+  $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: array();
+  $projects_data = \Drupal::service('update.manager')->getProjects();
+  foreach ($form['modules'] as $package_name => &$package) {
+    if ($package_name[0] != '#') {
+      foreach ($package as $module_name => &$module) {
+        if ($module_name[0] != '#') {
+          if (isset($module['enable']['#default_value']) && $module['enable']['#default_value'] == TRUE && array_key_exists($module_name, $projects_data)) {
+            $module['links']['nagios_ignore'] = array(
+              '#type' => 'checkbox',
+              '#title' => t('Ignore from Nagios'),
+              '#default_value' => isset($nagios_ignored_modules[$module_name]) && $nagios_ignored_modules[$module_name] ? TRUE : FALSE,
+            );
+            if (!\Drupal::moduleHandler()->moduleExists('coder_review')) {
+              $package['#theme'] = 'nagios_modules_fieldset';
+            }
+          }
+        }
+      }
+    }
+  }
+  $form['#submit'][] = 'nagios_system_modules_form_submit';
+}
+
+/**
+ * Additional system modules form submit handler.
+ *
+ * Saves the modules that have been selected to be ignored from Nagios
+ * reporting to the 'nagios_ignored_modules' variable.
+ * Variable contains an array of module names to be ignored in the form
+ * 'module_machine_name' => TRUE
+ */
+function nagios_system_modules_form_submit(&$form, &$form_state) {
+  $nagios_ignored_modules = array();
+  foreach ($form_state->getValue('modules') as $package_name => $package) {
+    if ($package_name[0] != '#') {
+      foreach ($package as $module_name => $module) {
+        if ($module_name[0] != '#') {
+          if (isset($module['links']['nagios_ignore']) && $module['links']['nagios_ignore']) {
+            $nagios_ignored_modules[$module_name] = TRUE;
+          }
+        }
+      }
+    }
+  }
+  \Drupal::configFactory()->getEditable('nagios.settings')
+    ->set('nagios.ignored_modules', $nagios_ignored_modules)
+    ->save();
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Modify the module display view by adding a nagios ignore link to every module
+ * description.
+ */
+function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  if (!\Drupal::currentUser()->hasPermission('administer nagios ignore') || isset($form['confirm'])) {
+    return;
+  }
+
+  // Grab the name of the theme.
+  $buildinfo = $form_state->getBuildInfo();
+  if (isset($buildinfo['args'][0]) && !empty($buildinfo['args'][0])) {
+    $theme_name = \Drupal\Component\Utility\Html::escape($buildinfo['args'][0]);
+
+    $config = \Drupal::config('nagios.settings');
+    $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: array();
+
+    // Check to see if the theme is provided by core, or if it's contrib/custom.
+    $projects_data = \Drupal::service('update.manager')->getProjects();
+    if (array_key_exists($theme_name, $projects_data)) {
+      // This is a settings page for a non-core theme, so add the checkbox.
+
+      $form['nagios'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Nagios Monitoring'),
+        'nagios_ignore' => array(
+          '#type' => 'checkbox',
+          '#title' => t('Ignore from Nagios'),
+          '#weight' => 200,
+          '#default_value' => isset($nagios_ignored_themes[$theme_name]) && $nagios_ignored_themes[$theme_name] ? TRUE : FALSE,
+        ),
+      );
+
+      $form['#submit'][] = 'nagios_system_theme_settings_form_submit';
+    }
+  }
+}
+
+/**
+ * Additional system theme settings form submit handler.
+ *
+ * Saves the Nagios theme ignore status to the 'nagios_ignored_themes' variable.
+ * Variable contains an array of theme names to be ignored in the form
+ * 'theme_machine_name' => TRUE
+ */
+function nagios_system_theme_settings_form_submit(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  $buildinfo = $form_state->getBuildInfo();
+  // Grab the name of the theme.
+  if (isset($buildinfo['args'][0]) && !empty($buildinfo['args'][0])) {
+    $theme_name = \Drupal\Component\Utility\Html::escape($buildinfo['args'][0]);
+    $config = \Drupal::config('nagios.settings');
+    $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: array();
+
+    if ($form_state->getValue('nagios_ignore')) {
+      $nagios_ignored_themes[$theme_name] = TRUE;
+    }
+    else {
+      unset($nagios_ignored_themes[$theme_name]);
+    }
+
+    \Drupal::configFactory()->getEditable('nagios.settings')
+      ->set('nagios.ignored_themes', $nagios_ignored_themes)
+      ->save();
+  }
 }
 
 /**

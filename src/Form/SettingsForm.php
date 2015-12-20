@@ -123,7 +123,7 @@ class SettingsForm extends ConfigFormBase {
       $form[$group]['nagios_enable_' . $module] = array(
         '#type' => 'checkbox',
         '#title' => $data['name'] . ' (' . $module . ')',
-        '#default_value' => $config->get('nagios_enable_' . $module) !== 0,
+        '#default_value' => $config->get('nagios.enable.' . $module) !== 0,
       );
     }
 
@@ -195,7 +195,7 @@ class SettingsForm extends ConfigFormBase {
     $config->set('nagios.status.unknown', $form_state->getValue('nagios_status_unknown_value'));
     
     foreach (nagios_invoke_all('nagios_info') as $module => $data) {
-      $config->set('nagios_enable_' . $module, $form_state->getValue('nagios_enable_' . $module));
+      $config->set('nagios.enable.' . $module, $form_state->getValue('nagios_enable_' . $module));
     }
     
     $config->set('nagios.limit_watchdog.display', $form_state->getValue('limit_watchdog_display'));

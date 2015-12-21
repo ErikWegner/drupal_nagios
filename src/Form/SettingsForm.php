@@ -160,7 +160,7 @@ class SettingsForm extends ConfigFormBase {
         
         // set #defaultvalue from #configname for first level form elements
         if (!isset($data['#default_value']) && isset($data['#configname'])) {
-          $form[$module][$element]['#default_value'] = $config->get($data['#configname']);
+          $form[$module][$element]['#default_value'] = $config->get($module . '.' . $data['#configname']);
         }
         
         // set #defaultvalue from #configname for second level form elements

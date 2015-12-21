@@ -93,7 +93,7 @@ function nagios_nagios_settings() {
     $form[$var] = array(
       '#type' => 'checkbox',
       '#title' => $function,
-      '#default_value' => $config->get($cfgname) ?: TRUE,
+      '#default_value' => $config->get('nagios.' . $cfgname) !== 0,
       '#description' => $description,
       '#configname' => $cfgname
     );
@@ -134,68 +134,6 @@ function nagios_nagios_settings() {
 
   return $form;
 }
-
-/**
- * Implements hook_form_FORM_ID_alter().
- *
- * Modify the module display view by adding a nagios ignore link to every module
- * description.
- */
-function nagios_form_system_modules_alter(&$form, &$form_state, $form_id) {
-  if (!\Drupal::currentUser()->hasPermission('administer nagios ignore') || isset($form['confirm'])) {
-    return;
-  }
-
-  $config = \Drupal::config('nagios.settings');
-  $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: array();
-  $projects_data = \Drupal::service('update.manager')->getProjects();
-  foreach ($form['modules'] as $package_name => &$package) {
-    if ($package_name[0] != '#') {
-      foreach ($package as $module_name => &$module) {
-        if ($module_name[0] != '#') {
-          if (isset($module['enable']['#default_value']) && $module['enable']['#default_value'] == TRUE && array_key_exists($module_name, $projects_data)) {
-            $module['links']['nagios_ignore'] = array(
-              '#type' => 'checkbox',
-              '#title' => t('Ignore from Nagios'),
-              '#default_value' => isset($nagios_ignored_modules[$module_name]) && $nagios_ignored_modules[$module_name] ? TRUE : FALSE,
-            );
-            if (!\Drupal::moduleHandler()->moduleExists('coder_review')) {
-              $package['#theme'] = 'nagios_modules_fieldset';
-            }
-          }
-        }
-      }
-    }
-  }
-  $form['#submit'][] = 'nagios_system_modules_form_submit';
-}
-
-/**
- * Additional system modules form submit handler.
- *
- * Saves the modules that have been selected to be ignored from Nagios
- * reporting to the 'nagios_ignored_modules' variable.
- * Variable contains an array of module names to be ignored in the form
- * 'module_machine_name' => TRUE
- */
-function nagios_system_modules_form_submit(&$form, &$form_state) {
-  $nagios_ignored_modules = array();
-  foreach ($form_state->getValue('modules') as $package_name => $package) {
-    if ($package_name[0] != '#') {
-      foreach ($package as $module_name => $module) {
-        if ($module_name[0] != '#') {
-          if (isset($module['links']['nagios_ignore']) && $module['links']['nagios_ignore']) {
-            $nagios_ignored_modules[$module_name] = TRUE;
-          }
-        }
-      }
-    }
-  }
-  \Drupal::configFactory()->getEditable('nagios.settings')
-    ->set('nagios.ignored_modules', $nagios_ignored_modules)
-    ->save();
-}
-
 
 /**
  * Implements hook_form_FORM_ID_alter().

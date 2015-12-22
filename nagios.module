@@ -281,7 +281,7 @@ function nagios_check_requirements() {
   $core_modules = array_keys($project_data['drupal']['includes']);
   foreach ($enabled_modules as $module_name) {
 
-    $requirements_data = $moduleHandler->invoke($module_name, 'requirements', 'runtime');
+    $requirements_data = $moduleHandler->invoke($module_name, 'requirements', array('runtime'));
     if (count($requirements_data)) {
       // Intercept the Update Status module to respect our Ignore behaviour.
       // Note, if $data is empty then there's no available update data and Update Status will handle that for us.

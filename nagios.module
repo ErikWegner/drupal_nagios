@@ -527,7 +527,7 @@ function nagios_check_cron() {
   if (!is_numeric($cron_last)) {
     $cron_last = \Drupal::state()->get('install_time', 0);
   }
-  $mins = $config->get('nagios_cron_duration') ?: 60;
+  $mins = $config->get('nagios.cron_duration') ?: 60;
 
   if (REQUEST_TIME > ($cron_last + $mins * 60)) {
     $data = array(

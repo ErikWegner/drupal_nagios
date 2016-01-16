@@ -211,7 +211,7 @@ function nagios_nagios() {
 
   $status = array();
   foreach(nagios_functions() as $function => $description) {
-    if ($config->get('nagios_func_' . $function) !== 0) {
+    if ($config->get('nagios.function.' . $function) !== 0) {
       $func = 'nagios_check_' . $function;
       $result = $func();
       $status[$result['key']] = $result['data'];

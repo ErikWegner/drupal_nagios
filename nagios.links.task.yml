@@ -1,0 +1,9 @@
+nagios.settings:
+  route_name: nagios.settings
+  title: 'General settings'
+  base_route: nagios.settings
+nagios.ignored_modules:
+  route_name: nagios.ignored_modules
+  title: 'Ignored modules'
+  base_route: nagios.settings
+  weight: 100

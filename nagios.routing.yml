@@ -1,0 +1,18 @@
+nagios.settings:
+    path: '/admin/config/system/nagios'
+    defaults:
+        _form: '\Drupal\nagios\Form\SettingsForm'
+        _title: 'Nagios monitoring'
+    requirements:
+        _permission: 'administer site configuration'
+
+nagios.ignored_modules:
+    path: '/admin/config/system/nagios/ignoredmodules'
+    defaults:
+        _form: '\Drupal\nagios\Form\IgnoredModulesForm'
+        _title: 'Ignored modules'
+    requirements:
+        _permission: 'administer nagios ignore'
+
+route_callbacks:
+    - '\Drupal\nagios\Controller\StatuspageController::routes'

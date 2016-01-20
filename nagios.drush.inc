@@ -1,4 +1,7 @@
 <?php
+
+use \Drupal\Core\Extension\ModuleHandlerInterface;
+
 /**
  * @file
  * Provides drush integration for the Nagios module.
@@ -31,7 +34,9 @@ function nagios_drush_command() {
  */
 function drush_nagios_list() {
   // Invoke hook_nagios_checks() here so people can add in their own checks.
-  $commands = array_merge(module_invoke_all('nagios_checks'), drush_command_invoke_all('nagios_checks'));
+  $moduleHandler = \Drupal::service('module_handler');
+  $commands = array_merge($moduleHandler->invokeAll('nagios_checks'), drush_command_invoke_all('nagios_checks'));
+  $rows = array();
   foreach ($commands as $cmd => $desc) {
     $rows[] = array($cmd, $desc);
   }
@@ -42,9 +47,10 @@ function drush_nagios_list() {
  * Drush command callback: nagios-check.
  */
 function drush_nagios_check($check = NULL) {
+  $moduleHandler = \Drupal::service('module_handler');
   if (isset($check)) {
-    foreach (module_implements('nagios_checks') as $module) {
-      if (in_array($check, array_keys(module_invoke($module, 'nagios_checks')))) {
+    foreach ($moduleHandler->getImplementations('nagios_checks') as $module) {
+      if (in_array($check, array_keys($moduleHandler->invoke($module, 'nagios_checks')))) {
         return nagios_check($module, $check);
       }
     }
@@ -101,12 +107,13 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
   $flag_insecure = FALSE;
   $exit_status = NULL;
   $message = '';
+  $config = \Drupal::config('nagios.settings');
   if ($available = update_get_available(TRUE)) {
     module_load_include('inc', 'update', 'update.compare');
     $data = update_calculate_project_data($available);
     // Unset any data referencing projects we're not interested in.
-    $nagios_ignored_modules = variable_get('nagios_ignored_modules', array());
-    $nagios_ignored_themes = variable_get('nagios_ignored_themes', array());
+    $nagios_ignored_modules = $config->get('nagios_ignored_modules') ?: array();
+    $nagios_ignored_themes = $config->get('nagios_ignored_themes') ?: array();
     $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
     foreach ($nagios_ignored_projects as $key => $value) {
       if ($value == TRUE && isset($data[$key])) {
@@ -223,4 +230,3 @@ function nagios_updates($data) {
 
   return $updates;
 }
-

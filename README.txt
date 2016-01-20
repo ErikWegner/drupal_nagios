@@ -1,8 +1,5 @@
 
 Copyright 2009 Khalid Baheyeldin http://2bits.com
-Drush commands originally authored by Josh Waihi http://joshwaihi.com
-Maintained by Code Enigma https://www.codeenigma.com
-
 
 Description
 -----------
@@ -25,12 +22,9 @@ If you already use Nagios in your organization to monitor your infrastructure, t
 this module will be useful for you. If you only run one or two Drupal sites, Nagios
 may be overkill for this task.
 
-There are also drush commands to allow you to execute Nagios plugins on remote
-Linux/Unix machines using NRPE.
-
-
 Security Note
 -------------
+
 This module exposes the following information from your web site:
 - The number of published nodes.
 - The number of active users.
@@ -41,14 +35,6 @@ To mitigate the security risks involve, make sure you use a unique ID. However, 
 not a fool proof solution. If you are concerned about this information being publicly
 accessible, then don't use this module.
 
-For additional security, you may also put the Nagios module status page behind http 
-authentication, which is recommended. If you do this, we recommend it is done via a 
-HTTPS connection. While plain HTTP will work, plaintext credentials are never advisable.
-
-If you can run NRPE then it is recommended you disable Nagios checks via Drupal and only
-use NRPE checks via drush instead as a security enhancement. This is the best method.
-
-
 Installation
 ------------
 To install this module, do the following:
@@ -57,13 +43,10 @@ To install this module, do the following:
 
 2. Upload the nagios directory that you extracted to your sites/all/modules
    directory.
-   
-3. Optional, to enable Nagios NRPE download and read the documentation at
-   http://nagios.sourceforge.net/docs/nrpe/NRPE.pdf
-
 
 Configuration for Drupal
 ------------------------
+
 To enable this module do the following:
 
 1. Go to Admin -> Build -> Modules
@@ -75,9 +58,9 @@ To enable this module do the following:
 
    Don't forget to configure Nagios accordingly. See below.
 
-
 Configuration for Nagios
 ------------------------
+
 The exact way to configure Nagios depends on several factors, e.g. how many Drupal
 sites you want to monitor, the way Nagios is setup, ...etc.
 
@@ -87,9 +70,6 @@ being run for each site.
 
 1. Copy the check_drupal script in the nagios-plugin directory to your Nagios plugins
    directory (e.g. /usr/lib/nagios/plugins).
-   
-   Depending on your Linux distribution, you may need to alter the PROGPATH variable
-   in check_drupal to the correct location for Nagios utils.sh script.
 
 2. Change the commands.cfg file for Nagios to include the following:
 
@@ -97,7 +77,7 @@ being run for each site.
 
    define command{
      command_name  check_drupal
-     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -U $ARG1$ -t $ARG2$
+     command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -u $ARG1$ -T $ARG2$
    }
 
    Nagios 3.x:
@@ -106,8 +86,6 @@ being run for each site.
      command_name  check_drupal
      command_line  /usr/lib/nagios/plugins/check_drupal -H $HOSTADDRESS$ -U $ARG1$ -t $ARG2$
    }
-
-   You can add the -S option for hosts that use https.
 
    If you are monitoring multiple Drupal instances set up as virtual hosts, you
    may have to use $HOSTNAME$ instead of $HOSTADDRESS$ in the command_line
@@ -173,46 +151,83 @@ Here is an explanation of some of the options:
   If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
   The default is the path nagios.
 
-
-Configuration for NRPE
-----------------------
-See http://nagios.sourceforge.net/docs/nrpe/NRPE.pdf for details on how to set up NRPE checks.
-
-Here is a basic example of checking cron is running.
-
-1. Edit the NRPE cfg file on the web server (normally /etc/nagios/nrpe.cfg) and add:
-
-     command[drupal_check_cron]=/path/to/drush -r /path/to/drupal nagios cron
-
-2. Add an NRPE check to the Nagios server to check for "drupal_check_cron".
-
-
-NRPE requirements checks
-------------------------
-It is important to note you will get critical requirements errors from this
-module if your NRPE user does not have write permissions to the Drupal
-files directory. To resolve this, we recommend the following steps:
-
-1. chgrp your files directory to www-data (where www-data is the group
-   of your web server user)
-
-2. chmod your files directory to 775
-
-3. Add your NRPE user to the www-data group
-
-As a more secure alternative, it should be possible for the nrpe/nagios 
-user to sudo su  to become the www-data user to run the check, but we had a
-lot of issues making this work.
-
-
 API
 ---
+
 This module provides an API for other modules to report status back to Nagios.
-See nagios.api.php for examples of the hooks and documentation.
+Your module should implement the following hooks:
+
+hook_nagios_info()
+------------------
+This hook is used to provide a way to enabled/disable a certain module from being included in Nagios
+reports and alerts.
+
+function yourmodule_nagios_info() {
+  return array(
+    'name'   => 'Your module name',
+    'id'     => 'IDENTIFIER',
+  );
+}
+
+hook_nagios()
+-------------
+Your module should have a yourmodule_nagios() function that does the actual work of checking something
+and reporting back a status and some info.
+
+The data returned is an associative array as follows:
+
+array(
+  'key'  => 'IDENTIFIER',
+  'data' => array(
+    'status' => STATUS_CODE,
+    'type    => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown) or can be 'perf', which does
+                         // Cause an alert, but can be processed later by custom programs
+    'text'   => 'Text description for the problem',
+  ),
+);
+
+STATUS_CODE must be one of the following, defined in nagios.module:
+
+  NAGIOS_STATUS_OK
+  NAGIOS_STATUS_UNKNOWN
+  NAGIOS_STATUS_WARNING
+  NAGIOS_STATUS_CRITICAL
+
+Here is an example:
+
+function yourmodule_nagios() {
+  $data = array();
+
+  // Check something ...
+  $count = ...
+  if (!$count) {
+    $data = array(
+      'status' => NAGIOS_STATUS_WARNING,
+      'type'   => 'state',
+      'text'   => t('A very brief description of the warning'),
+    );
+  }
+  else {
+    $data = array(
+      'status' => NAGIOS_STATUS_OK,
+      'type'   => 'state',
+      'text'   => '',
+    );
+  }
+
+  return array(
+    'key' => 'IDENTIFIER', // This identifier will appear on Nagios' monitoring pages and alerts.
+    'data' => $data,
+  );
+}
 
 For a real life example on how to use this API, check the performance.module in the devel project
 at http://drupal.org/project/devel
 
+hook_nagios_settings()
+----------------------
+This hook provides standard form API elements to be included at admin/settings/nagios. You can
+set any thresholds you want in this hook.
 
 Bugs/Features/Patches:
 ----------------------

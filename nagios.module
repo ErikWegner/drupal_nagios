@@ -249,8 +249,8 @@ function nagios_check_requirements() {
   // The only safe way is to use module_invoke, calling each module in turn.
 
   $project_data = \Drupal::service('update.manager')->getProjects();
-  $nagios_ignored_modules = $config->get('nagios.ignored_modules', array());
-  $nagios_ignored_themes = $config->get('nagios.ignored_themes', array());
+  $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: array();
+  $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: array();
   $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
 
   $enabled_modules = array();

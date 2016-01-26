@@ -99,7 +99,7 @@ class StatuspageController extends ControllerBase {
               $key == 'ADMIN' &&
               $value['text'] == 'Module and theme update status'
             ) {
-              $tmp_projects = update_calculate_project_data(update_get_projects());
+              $tmp_projects = update_calculate_project_data(\Drupal::service('update.manager')->getProjects());
               $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: array();
               $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: array();
               $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
@@ -151,7 +151,7 @@ class StatuspageController extends ControllerBase {
 
     // Disable browser cache
     $response->setMaxAge(0);
-    $response->setExpires($date);
+    $response->setExpires();
 
     return $response;
   }

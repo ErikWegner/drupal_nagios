@@ -1,6 +1,7 @@
 <?php
 
 use \Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Logger\RfcLogLevel;
 
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 // 2015 Erik Wegner
@@ -249,8 +250,8 @@ function nagios_check_requirements() {
   // The only safe way is to use module_invoke, calling each module in turn.
 
   $project_data = \Drupal::service('update.manager')->getProjects();
-  $nagios_ignored_modules = $config->get('nagios.ignored_modules', array());
-  $nagios_ignored_themes = $config->get('nagios.ignored_themes', array());
+  $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: array();
+  $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: array();
   $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
 
   $enabled_modules = array();
@@ -439,14 +440,14 @@ function nagios_check_watchdog() {
   //RFC3164/Watchdog has 8 levels. Nagios module has 3 (plus UNKNOWN). This maps one to the other.
   $severity_translation = array(
     //watchdog => nagios
-    WATCHDOG_DEBUG => NAGIOS_STATUS_OK,
-    WATCHDOG_INFO => NAGIOS_STATUS_OK,
-    WATCHDOG_NOTICE => NAGIOS_STATUS_OK,
-    WATCHDOG_WARNING => NAGIOS_STATUS_WARNING,
-    WATCHDOG_ERROR => NAGIOS_STATUS_CRITICAL,
-    WATCHDOG_CRITICAL => NAGIOS_STATUS_CRITICAL,
-    WATCHDOG_ALERT => NAGIOS_STATUS_CRITICAL,
-    WATCHDOG_EMERG => NAGIOS_STATUS_CRITICAL
+    RfcLogLevel::DEBUG => NAGIOS_STATUS_OK,
+    RfcLogLevel::INFO => NAGIOS_STATUS_OK,
+    RfcLogLevel::NOTICE => NAGIOS_STATUS_OK,
+    RfcLogLevel::WARNING => NAGIOS_STATUS_WARNING,
+    RfcLogLevel::ERROR => NAGIOS_STATUS_CRITICAL,
+    RfcLogLevel::CRITICAL => NAGIOS_STATUS_CRITICAL,
+    RfcLogLevel::ALERT => NAGIOS_STATUS_CRITICAL,
+    RfcLogLevel::EMERGENCY => NAGIOS_STATUS_CRITICAL
   );
 
   $severity = NAGIOS_STATUS_OK; //max this across the result set

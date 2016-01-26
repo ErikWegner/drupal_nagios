@@ -151,7 +151,7 @@ class StatuspageController extends ControllerBase {
 
     // Disable browser cache
     $response->setMaxAge(0);
-    $response->setExpires($date);
+    $response->setExpires();
 
     return $response;
   }

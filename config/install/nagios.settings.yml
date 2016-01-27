@@ -5,15 +5,15 @@ nagios:
         critical: 2
         unknown: 3
     min_report_severity: 1
-    ua: 'Nagios'	
+    ua: 'Nagios'
     statuspage:
         path: 'nagios'
-        enabled: 0
+        enabled: false
         controller: '\Drupal\nagios\Controller\StatuspageController::content'
-        getparam: FALSE
-    show_outdated_names: TRUE
+        getparam: false
+    show_outdated_names: true
     limit_watchdog:
-        display: FALSE
+        display: false
         results: 50
     cron_duration: 60
     elysia_cron_duration: 60

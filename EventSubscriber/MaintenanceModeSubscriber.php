@@ -1,8 +1,4 @@
 <?php
-/**
- * @file
- * Contains \Drupal\nagios\EventSubscriber\MaintenanceModeSubscriber.
- */
 
 namespace Drupal\nagios\EventSubscriber;
 

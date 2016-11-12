@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\nagios\Form\IgnoredModulesForm.
- */
-
 namespace Drupal\nagios\Form;
 
 use Drupal\Core\Extension\ModuleHandlerInterface;

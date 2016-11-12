@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\nagios\Controller\StatuspageController.
- */
-
 namespace Drupal\nagios\Controller;
 
 use Drupal\Core\Controller\ControllerBase;

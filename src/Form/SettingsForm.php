@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\nagios\Form\SettingsForm.
- */
-
 namespace Drupal\nagios\Form;
 
 use Drupal\Core\Form\ConfigFormBase;

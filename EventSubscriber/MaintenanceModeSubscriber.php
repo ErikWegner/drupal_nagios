@@ -1,5 +1,4 @@
 <?php
-
 namespace Drupal\nagios\EventSubscriber;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

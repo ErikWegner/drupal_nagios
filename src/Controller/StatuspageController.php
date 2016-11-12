@@ -140,7 +140,7 @@ class StatuspageController extends ControllerBase {
       }
     }
 
-    $output .= implode(', ', $output_state) . ' | ' . implode(';', $output_perf) . "\n";
+    $output .= implode(', ', $output_state) . ' | ' . implode('; ', $output_perf) . "\n";
 
     $response = new Response($output, Response::HTTP_OK, ['Content-Type' => 'text/plain']);
 

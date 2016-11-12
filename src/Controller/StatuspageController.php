@@ -60,22 +60,15 @@ class StatuspageController extends ControllerBase {
     $severity = NAGIOS_STATUS_OK;
     $min_severity = $config->get('nagios.min_report_severity');
 
+    $output_state = array();
+    $output_perf  = array();
+
     foreach ($nagios_data as $module_name => $module_data) {
       foreach ($module_data as $key => $value) {
+        // Check status and set global severity
         if (is_array($value) && array_key_exists('status', $value) && $value['status'] >= $min_severity) {
           $severity = max($severity, $value['status']);
         }
-      }
-    }
-
-    // Identifier that we check on the other side
-    $output = "\n" . 'nagios=' . $codes[$severity] . ', ';
-
-    $output_state = array();
-    $output_perf = array();
-
-    foreach ($nagios_data as $module_name => $module_data) {
-      foreach ($module_data as $key => $value) {
         switch ($value['type']) {
           case 'state':
             // If status is larger then minimum severity
@@ -139,6 +132,9 @@ class StatuspageController extends ControllerBase {
         }
       }
     }
+
+    // Identifier that we check on the other side
+    $output = "\n" . 'nagios=' . $codes[$severity] . ', ';
 
     $output .= implode(', ', $output_state) . ' | ' . implode('; ', $output_perf) . "\n";
 

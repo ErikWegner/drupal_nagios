@@ -49,7 +49,7 @@ class StatuspageController extends ControllerBase {
         $nagios_data = nagios_invoke_all('nagios');
       }
     } else {
-      // This is not an authorized unique id or uer, so just return this default status.
+      // This is not an authorized unique id or user, so just return this default status.
       $nagios_data = array(
         'nagios' => array(
           'DRUPAL' => array(
@@ -179,7 +179,7 @@ class StatuspageController extends ControllerBase {
 
   public function access() {
     $config = \Drupal::config('nagios.settings');
-    return AccessResult::allowedIf($config->get('nagios.statuspage.enabled') === 1);
+    return AccessResult::allowedIf($config->get('nagios.statuspage.enabled') === TRUE);
   }
 
 }

@@ -29,14 +29,12 @@ class StatuspageController extends ControllerBase {
     $request_code = $_SERVER['HTTP_USER_AGENT'];
 
     // Check if HTTP GET variable "unique_id" is used and the usage is allowed.
-    if (isset($_GET['unique_id'])) {
-      if ($config->get('nagios.statuspage.getparam') == TRUE) {
-        $request_code = $_GET['unique_id'];
-      }
+    if (isset($_GET['unique_id']) && $config->get('nagios.statuspage.getparam') == TRUE) {
+      $request_code = $_GET['unique_id'];
     }
 
-    if (\Drupal::currentUser()
-        ->hasPermission('administer site configuration') || ($request_code == $ua)) {
+    if ($request_code == $ua || \Drupal::currentUser()
+        ->hasPermission('administer site configuration')) {
       // Authorized so calling other modules
       if ($module) {
         // A specific module has been requested.
@@ -89,9 +87,9 @@ class StatuspageController extends ControllerBase {
             }
 
             if (
-              $config->get('nagios.show_outdated_names') &&
               $key == 'ADMIN' &&
-              $value['text'] == 'Module and theme update status'
+              $value['text'] == 'Module and theme update status' &&
+              $config->get('nagios.show_outdated_names')
             ) {
               $tmp_projects = update_calculate_project_data(\Drupal::service('update.manager')
                 ->getProjects());
@@ -101,27 +99,25 @@ class StatuspageController extends ControllerBase {
               $outdated_count = 0;
               $tmp_modules = '';
               foreach ($tmp_projects as $projkey => $projval) {
-                if (!isset($nagios_ignored_projects[$projkey])) {
-                  if ($projval['status'] < UpdateManagerInterface::CURRENT && $projval['status'] >= UpdateManagerInterface::NOT_SECURE) {
-                    switch ($projval['status']) {
-                      case UpdateManagerInterface::NOT_SECURE:
-                        $tmp_projstatus = $this->t('NOT SECURE');
-                        break;
-                      case UpdateManagerInterface::REVOKED:
-                        $tmp_projstatus = $this->t('REVOKED');
-                        break;
-                      case UpdateManagerInterface::NOT_SUPPORTED:
-                        $tmp_projstatus = $this->t('NOT SUPPORTED');
-                        break;
-                      case UpdateManagerInterface::NOT_CURRENT:
-                        $tmp_projstatus = $this->t('NOT CURRENT');
-                        break;
-                      default:
-                        $tmp_projstatus = $projval['status'];
-                    }
-                    $tmp_modules .= ' ' . $projkey . ':' . $tmp_projstatus;
-                    $outdated_count++;
+                if (!isset($nagios_ignored_projects[$projkey]) && $projval['status'] < UpdateManagerInterface::CURRENT && $projval['status'] >= UpdateManagerInterface::NOT_SECURE) {
+                  switch ($projval['status']) {
+                    case UpdateManagerInterface::NOT_SECURE:
+                      $tmp_projstatus = $this->t('NOT SECURE');
+                      break;
+                    case UpdateManagerInterface::REVOKED:
+                      $tmp_projstatus = $this->t('REVOKED');
+                      break;
+                    case UpdateManagerInterface::NOT_SUPPORTED:
+                      $tmp_projstatus = $this->t('NOT SUPPORTED');
+                      break;
+                    case UpdateManagerInterface::NOT_CURRENT:
+                      $tmp_projstatus = $this->t('NOT CURRENT');
+                      break;
+                    default:
+                      $tmp_projstatus = $projval['status'];
                   }
+                  $tmp_modules .= ' ' . $projkey . ':' . $tmp_projstatus;
+                  $outdated_count++;
                 }
               }
               if ($outdated_count > 0) {

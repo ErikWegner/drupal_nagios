@@ -83,8 +83,8 @@ class IgnoredModulesForm extends ConfigFormBase {
       $enabled = FALSE;
     }
 
-    $this->addDescription($form, $form_state);
-    $this->buildTable($form, $form_state, $enabled);
+    $this->addDescription($form);
+    $this->buildTable($form, $enabled);
     $form = parent::buildForm($form, $form_state);
     if (!$enabled) {
       $form['actions']['submit']['#disabled'] = TRUE;
@@ -98,10 +98,8 @@ class IgnoredModulesForm extends ConfigFormBase {
    *
    * @param array $form
    *   An associative array containing the structure of the form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The current state of the form.
    */
-  protected function addDescription(array &$form, FormStateInterface $form_state) {
+  protected function addDescription(array &$form) {
     $form['intro'] = [
       '#markup' => $this->t('Select those modules that should be ignored for requirement checks.'),
     ];
@@ -112,12 +110,10 @@ class IgnoredModulesForm extends ConfigFormBase {
    *
    * @param array $form
    *   An associative array containing the structure of the form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The current state of the form.
    * @param boolean $enabled
    *   Enable the check boxes
    */
-  protected function buildTable(array &$form, FormStateInterface $form_state, $enabled) {
+  protected function buildTable(array &$form, $enabled) {
     $config = $this->config('nagios.settings');
 
     $header = [
@@ -137,7 +133,7 @@ class IgnoredModulesForm extends ConfigFormBase {
     // Build the rows
     foreach ($modules as $filename => $module) {
       if (empty($module->info['hidden'])) {
-        $options[$filename] = $this->buildRow($modules, $module);
+        $options[$filename] = $this->buildRow($module);
         $options[$filename]['#disabled'] = TRUE;
       }
     }
@@ -167,15 +163,13 @@ class IgnoredModulesForm extends ConfigFormBase {
   /**
    * Build one row in the list of modules
    *
-   * @param array $modules
-   *  An array of all modules
-   * @param \Drupal\nagios\Form\Extension $module
+   * @param Extension $module
    *  The module that the row is build for
    *
    * @return array
    *  The row data for the table select element
    */
-  protected function buildRow(array $modules, Extension $module) {
+  protected function buildRow(Extension $module) {
     $row = [];
     $row['title'] = $module->info['name'];
     $row['description'] = $this->t($module->info['description']);

@@ -161,10 +161,8 @@ class SettingsForm extends ConfigFormBase {
         // set #defaultvalue from #configname for second level form elements
         if (isset($data['#type']) && $data['#type'] == 'fieldset') {
           foreach ($data as $fieldsetelement => $fieldsetdata) {
-            if (is_array($fieldsetdata)) {
-              if (!isset($fieldsetdata['#default_value']) && isset($fieldsetdata['#configname'])) {
-                $form[$module][$element][$fieldsetelement]['#default_value'] = $config->get($module . '.' . $fieldsetdata['#configname']);
-              }
+            if (is_array($fieldsetdata) && !isset($fieldsetdata['#default_value']) && isset($fieldsetdata['#configname'])) {
+              $form[$module][$element][$fieldsetelement]['#default_value'] = $config->get($module . '.' . $fieldsetdata['#configname']);
             }
           }
         }
@@ -206,10 +204,8 @@ class SettingsForm extends ConfigFormBase {
         // save config for second level form elements
         if (isset($data['#type']) && $data['#type'] == 'fieldset') {
           foreach ($data as $fieldsetelement => $fieldsetdata) {
-            if (is_array($fieldsetdata)) {
-              if (!isset($fieldsetdata['#default_value']) && isset($fieldsetdata['#configname'])) {
-                $config->set($module . '.' . $fieldsetdata['#configname'], $form_state->getValue($fieldsetelement, $config->get($module . '.' . $fieldsetdata['#configname'])));
-              }
+            if (is_array($fieldsetdata) && !isset($fieldsetdata['#default_value']) && isset($fieldsetdata['#configname'])) {
+              $config->set($module . '.' . $fieldsetdata['#configname'], $form_state->getValue($fieldsetelement, $config->get($module . '.' . $fieldsetdata['#configname'])));
             }
           }
         }

@@ -1,7 +1,5 @@
 <?php
 
-use \Drupal\Core\Extension\ModuleHandlerInterface;
-
 /**
  * @file
  * Provides drush integration for the Nagios module.
@@ -11,21 +9,24 @@ use \Drupal\Core\Extension\ModuleHandlerInterface;
  * Implements hook_drush_command().
  */
 function nagios_drush_command() {
-  $items['nagios-list'] = array(
+  $items['nagios-list'] = [
     'description' => dt('List all available nagios commands.'),
-    'arguments' => array(),
-    'aliases' => array('nagios-ls'),
-  );
-  $items['nagios-check'] = array(
+    'arguments' => [],
+    'aliases' => ['nagios-ls'],
+  ];
+  $items['nagios-check'] = [
     'description' => dt('Run a nagios command.'),
-    'arguments' => array('command' => 'The command to run'),
-    'aliases' => array('nagios'),
-  );
-  $items['nagios-updates'] = array(
+    'arguments' => ['command' => 'The command to run'],
+    'aliases' => ['nagios'],
+  ];
+  $items['nagios-updates'] = [
     'description' => dt('Return a space delimited string of all monitored projects with available updates.'),
-    'arguments' => array('update type' => 'Type of update available, accepts either all or security.', 'nagios flag' => 'Send \'nagios\' as a flag to enable Nagios prefixes to the output.'),
-    'aliases' => array('nagios-up'),
-  );
+    'arguments' => [
+      'update type' => 'Type of update available, accepts either all or security.',
+      'nagios flag' => 'Send \'nagios\' as a flag to enable Nagios prefixes to the output.',
+    ],
+    'aliases' => ['nagios-up'],
+  ];
   return $items;
 }
 
@@ -36,31 +37,35 @@ function drush_nagios_list() {
   // Invoke hook_nagios_checks() here so people can add in their own checks.
   $moduleHandler = \Drupal::service('module_handler');
   $commands = array_merge($moduleHandler->invokeAll('nagios_checks'), drush_command_invoke_all('nagios_checks'));
-  $rows = array();
+  $rows = [];
   foreach ($commands as $cmd => $desc) {
-    $rows[] = array($cmd, $desc);
+    $rows[] = [$cmd, $desc];
   }
   return drush_print_table($rows);
 }
 
 /**
  * Drush command callback: nagios-check.
+ *
+ * @param null|string $check
  */
 function drush_nagios_check($check = NULL) {
   $moduleHandler = \Drupal::service('module_handler');
-  if (isset($check)) {
+  if ($check !== NULL) {
     foreach ($moduleHandler->getImplementations('nagios_checks') as $module) {
-      if (in_array($check, array_keys($moduleHandler->invoke($module, 'nagios_checks')))) {
-        return nagios_check($module, $check);
+      if (array_key_exists($check, $moduleHandler->invoke($module, 'nagios_checks'))) {
+        nagios_check($module, $check);
+        return;
       }
     }
     foreach (drush_command_implements('nagios_checks') as $command) {
       $function = $command . '_nagios_checks';
-      if (in_array($check, array_keys($function()))) {
-        return nagios_check($command, $check);
+      if (array_key_exists($check, $function())) {
+        nagios_check($command, $check);
+        return;
       }
     }
-    drush_set_error(dt('The requested nagios check does not exist: !check.', array('!check' => $check)));
+    drush_set_error(dt('The requested nagios check does not exist: !check.', ['!check' => $check]));
   }
   else {
     drush_set_error(dt('Missing argument for nagios-check'));
@@ -69,6 +74,9 @@ function drush_nagios_check($check = NULL) {
 
 /**
  * Helper function for drush_nagios_check().
+ *
+ * @param $module
+ * @param $check
  */
 function nagios_check($module, $check) {
   $function = $module . '_nagios_check_' . $check;
@@ -99,7 +107,7 @@ function nagios_check($module, $check) {
  * A string containing:
  * - 'all' to list all updates.
  * - 'security' to list security updates only.
- * 
+ *
  * @param integer $nagios_flag
  * Send 'nagios' to prefix the output with a Nagios string.
  */
@@ -112,8 +120,8 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
     module_load_include('inc', 'update', 'update.compare');
     $data = update_calculate_project_data($available);
     // Unset any data referencing projects we're not interested in.
-    $nagios_ignored_modules = $config->get('nagios_ignored_modules') ?: array();
-    $nagios_ignored_themes = $config->get('nagios_ignored_themes') ?: array();
+    $nagios_ignored_modules = $config->get('nagios_ignored_modules') ?: [];
+    $nagios_ignored_themes = $config->get('nagios_ignored_themes') ?: [];
     $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
     foreach ($nagios_ignored_projects as $key => $value) {
       if ($value == TRUE && isset($data[$key])) {
@@ -121,7 +129,7 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
       }
     }
 
-    $module_list = array();
+    $module_list = [];
 
     $updates = nagios_updates($data);
     if (count($updates)) {
@@ -159,11 +167,11 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
       }
     }
   }
-  if ($nagios_flag == 'nagios' && is_null($exit_status)) {
+  if ($nagios_flag == 'nagios' && $exit_status === NULL) {
     $message = 'OK - No updates';
   }
   drush_set_context('DRUSH_EXECUTION_COMPLETED', TRUE);
-  if (!is_null($exit_status) || $nagios_flag == 'nagios') {
+  if ($exit_status !== NULL || $nagios_flag == 'nagios') {
     drush_print($message);
   }
   exit($exit_status);
@@ -171,13 +179,17 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
 
 /**
  * Helper function for drush_nagios_updates().
+ *
+ * @param $data
+ *
+ * @return array|null
  */
 function nagios_updates($data) {
   if (!is_array($data)) {
     return NULL;
   }
 
-  $updates = array();
+  $updates = [];
 
   // Create an array of status values keyed by module or theme name, since
   // we'll need this while generating the report if we have to cross reference
@@ -191,8 +203,8 @@ function nagios_updates($data) {
   foreach ($data as $project) {
     if ($project['status'] == UPDATE_NOT_SECURE || $project['status'] == UPDATE_NOT_CURRENT) {
 
-      $security_class = array();
-      $version_class = array();
+      $security_class = [];
+      $version_class = [];
       if (isset($project['recommended'])) {
         if ($project['status'] != UPDATE_CURRENT || $project['existing_version'] !== $project['recommended']) {
 
@@ -209,14 +221,14 @@ function nagios_updates($data) {
             // Apply an extra class if we're displaying both a recommended
             // version and anything else for an extra visual hint.
             if ($project['recommended'] !== $project['latest_version']
-                || !empty($project['also'])
-                || ($project['install_type'] == 'dev'
-                  && isset($project['dev_version'])
-                  && $project['latest_version'] !== $project['dev_version']
-                  && $project['recommended'] !== $project['dev_version'])
-                || (isset($project['security updates'][0])
-                  && $project['recommended'] !== $project['security updates'][0])
-                ) {
+              || !empty($project['also'])
+              || ($project['install_type'] == 'dev'
+                && isset($project['dev_version'])
+                && $project['latest_version'] !== $project['dev_version']
+                && $project['recommended'] !== $project['dev_version'])
+              || (isset($project['security updates'][0])
+                && $project['recommended'] !== $project['security updates'][0])
+            ) {
               $version_class[] = 'version-recommended-strong';
             }
           }
@@ -225,7 +237,7 @@ function nagios_updates($data) {
 
       $row_key = drupal_strtolower($project['name']);
       if (!isset($updates[$row_key])) {
-        $updates[$row_key] = array();
+        $updates[$row_key] = [];
       }
       $updates[$row_key]['type'] = $project['project_type'];
       $updates[$row_key]['status'] = $project['status'];

@@ -63,7 +63,7 @@ class IgnoredModulesForm extends ConfigFormBase {
     $settings_url = Url::fromRoute('nagios.settings')->toString();
     // Is the nagios module itself disabled?
     if ($config->get('nagios.enable.nagios') === 0) {
-      drupal_set_message(
+      \Drupal::messenger()->addMessage(
         $this->t(
           'These settings are not available, because the nagios module is not enabled within the <a href="@nagios-settings">nagios settings</a>.', [
             '@nagios-settings' => $settings_url,
@@ -74,7 +74,7 @@ class IgnoredModulesForm extends ConfigFormBase {
 
     // Is "Checking of hook_requirements." disabled?
     if ($config->get('nagios.function.requirements') === 0) {
-      drupal_set_message(
+      \Drupal::messenger()->addMessage(
         $this->t(
           'These settings are not available, because the requirements check is not enabled within the <a href="@nagios-settings">nagios settings</a>.', [
             '@nagios-settings' => $settings_url,

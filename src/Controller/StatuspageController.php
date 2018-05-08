@@ -4,6 +4,7 @@ namespace Drupal\nagios\Controller;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Route;
 
@@ -101,18 +102,18 @@ class StatuspageController extends ControllerBase {
               $tmp_modules = '';
               foreach ($tmp_projects as $projkey => $projval) {
                 if (!isset($nagios_ignored_projects[$projkey])) {
-                  if ($projval['status'] < UPDATE_CURRENT && $projval['status'] >= UPDATE_NOT_SECURE) {
+                  if ($projval['status'] < UpdateManagerInterface::CURRENT && $projval['status'] >= UpdateManagerInterface::NOT_SECURE) {
                     switch ($projval['status']) {
-                      case UPDATE_NOT_SECURE:
+                      case UpdateManagerInterface::NOT_SECURE:
                         $tmp_projstatus = $this->t('NOT SECURE');
                         break;
-                      case UPDATE_REVOKED:
+                      case UpdateManagerInterface::REVOKED:
                         $tmp_projstatus = $this->t('REVOKED');
                         break;
-                      case UPDATE_NOT_SUPPORTED:
+                      case UpdateManagerInterface::NOT_SUPPORTED:
                         $tmp_projstatus = $this->t('NOT SUPPORTED');
                         break;
-                      case UPDATE_NOT_CURRENT:
+                      case UpdateManagerInterface::NOT_CURRENT:
                         $tmp_projstatus = $this->t('NOT CURRENT');
                         break;
                       default:

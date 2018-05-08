@@ -2,10 +2,10 @@
 
 namespace Drupal\nagios\Form;
 
+use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Extension\Extension;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -65,9 +65,9 @@ class IgnoredModulesForm extends ConfigFormBase {
     if ($config->get('nagios.enable.nagios') === 0) {
       drupal_set_message(
         $this->t(
-          'These settings are not available, because the nagios module is not enabled within the <a href="@nagios-settings">nagios settings</a>.', array(
-          '@nagios-settings' => $settings_url
-          )
+          'These settings are not available, because the nagios module is not enabled within the <a href="@nagios-settings">nagios settings</a>.', [
+            '@nagios-settings' => $settings_url,
+          ]
         ), 'warning');
       $enabled = FALSE;
     }
@@ -76,9 +76,9 @@ class IgnoredModulesForm extends ConfigFormBase {
     if ($config->get('nagios.function.requirements') === 0) {
       drupal_set_message(
         $this->t(
-          'These settings are not available, because the requirements check is not enabled within the <a href="@nagios-settings">nagios settings</a>.', array(
-          '@nagios-settings' => $settings_url
-          )
+          'These settings are not available, because the requirements check is not enabled within the <a href="@nagios-settings">nagios settings</a>.', [
+            '@nagios-settings' => $settings_url,
+          ]
         ), 'warning');
       $enabled = FALSE;
     }
@@ -95,19 +95,21 @@ class IgnoredModulesForm extends ConfigFormBase {
 
   /**
    * Build the list of modules
+   *
    * @param array $form
    *   An associative array containing the structure of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current state of the form.
    */
   protected function addDescription(array &$form, FormStateInterface $form_state) {
-    $form['intro'] = array(
-      '#markup' => t('Select those modules that should be ignored for requirement checks.')
-    );
+    $form['intro'] = [
+      '#markup' => $this->t('Select those modules that should be ignored for requirement checks.'),
+    ];
   }
 
   /**
    * Build the list of modules
+   *
    * @param array $form
    *   An associative array containing the structure of the form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
@@ -118,12 +120,12 @@ class IgnoredModulesForm extends ConfigFormBase {
   protected function buildTable(array &$form, FormStateInterface $form_state, $enabled) {
     $config = $this->config('nagios.settings');
 
-    $header = array(
-      'title' => t('Title'),
-      'description' => t('Description')
-    );
+    $header = [
+      'title' => $this->t('Title'),
+      'description' => $this->t('Description'),
+    ];
 
-    $options = array();
+    $options = [];
 
     // Include system.admin.inc so we can use the sort callbacks.
     $this->moduleHandler->loadInclude('system', 'inc', 'system.admin');
@@ -141,19 +143,19 @@ class IgnoredModulesForm extends ConfigFormBase {
     }
 
     // Set up the check boxes
-    $defaults = array();
-    $nagios_ignored_modules = $config->get('nagios.ignored_modules') ? : array();
+    $defaults = [];
+    $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: [];
     foreach ($nagios_ignored_modules as $ignored_module) {
       $defaults[$ignored_module] = 1;
     }
 
-    $form['modules'] = array(
+    $form['modules'] = [
       '#type' => 'tableselect',
       '#header' => $header,
       '#options' => $options,
-      '#empty' => t('No modules available.'),
-      '#default_value' => $defaults
-    );
+      '#empty' => $this->t('No modules available.'),
+      '#default_value' => $defaults,
+    ];
 
     if (!$enabled) {
       foreach ($form['modules']['#options'] as $key => $value) {
@@ -164,15 +166,17 @@ class IgnoredModulesForm extends ConfigFormBase {
 
   /**
    * Build one row in the list of modules
+   *
    * @param array $modules
    *  An array of all modules
    * @param \Drupal\nagios\Form\Extension $module
    *  The module that the row is build for
+   *
    * @return array
    *  The row data for the table select element
    */
   protected function buildRow(array $modules, Extension $module) {
-    $row = array();
+    $row = [];
     $row['title'] = $module->info['name'];
     $row['description'] = $this->t($module->info['description']);
     return $row;

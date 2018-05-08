@@ -2,8 +2,8 @@
 
 namespace Drupal\nagios\Controller;
 
-use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Route;
 
@@ -34,34 +34,38 @@ class StatuspageController extends ControllerBase {
       }
     }
 
-    if (\Drupal::currentUser()->hasPermission('administer site configuration') || ($request_code == $ua)) {
+    if (\Drupal::currentUser()
+        ->hasPermission('administer site configuration') || ($request_code == $ua)) {
       // Authorized so calling other modules
       if ($module) {
         // A specific module has been requested.
-        $nagios_data = array();
-        $nagios_data[$module] = \Drupal::moduleHandler()->invoke($module, 'nagios', $id);
-      } else {
+        $nagios_data = [];
+        $nagios_data[$module] = \Drupal::moduleHandler()
+          ->invoke($module, 'nagios', $id);
+      }
+      else {
         $nagios_data = nagios_invoke_all('nagios');
       }
-    } else {
+    }
+    else {
       // This is not an authorized unique id or uer, so just return this default status.
-      $nagios_data = array(
-        'nagios' => array(
-          'DRUPAL' => array(
+      $nagios_data = [
+        'nagios' => [
+          'DRUPAL' => [
             'status' => NAGIOS_STATUS_UNKNOWN,
             'type' => 'state',
-            'text' => t('Unauthorized'),
-          ),
-        ),
-      );
+            'text' => $this->t('Unauthorized'),
+          ],
+        ],
+      ];
     }
 
     // Find the highest level to be the overall status
     $severity = NAGIOS_STATUS_OK;
     $min_severity = $config->get('nagios.min_report_severity');
 
-    $output_state = array();
-    $output_perf  = array();
+    $output_state = [];
+    $output_perf = [];
 
     foreach ($nagios_data as $module_name => $module_data) {
       foreach ($module_data as $key => $value) {
@@ -74,7 +78,8 @@ class StatuspageController extends ControllerBase {
             // If status is larger then minimum severity
             if ($value['status'] >= $min_severity) {
               $tmp_state = $key . ':' . $codes[$value['status']];
-            } else {
+            }
+            else {
               $tmp_state = $key . ':' . $codes[NAGIOS_STATUS_OK];
             }
 
@@ -87,9 +92,10 @@ class StatuspageController extends ControllerBase {
               $key == 'ADMIN' &&
               $value['text'] == 'Module and theme update status'
             ) {
-              $tmp_projects = update_calculate_project_data(\Drupal::service('update.manager')->getProjects());
-              $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: array();
-              $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: array();
+              $tmp_projects = update_calculate_project_data(\Drupal::service('update.manager')
+                ->getProjects());
+              $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: [];
+              $nagios_ignored_themes = $config->get('nagios.ignored_themes') ?: [];
               $nagios_ignored_projects = $nagios_ignored_modules + $nagios_ignored_themes;
               $outdated_count = 0;
               $tmp_modules = '';
@@ -98,16 +104,16 @@ class StatuspageController extends ControllerBase {
                   if ($projval['status'] < UPDATE_CURRENT && $projval['status'] >= UPDATE_NOT_SECURE) {
                     switch ($projval['status']) {
                       case UPDATE_NOT_SECURE:
-                        $tmp_projstatus = t('NOT SECURE');
+                        $tmp_projstatus = $this->t('NOT SECURE');
                         break;
                       case UPDATE_REVOKED:
-                        $tmp_projstatus = t('REVOKED');
+                        $tmp_projstatus = $this->t('REVOKED');
                         break;
                       case UPDATE_NOT_SUPPORTED:
-                        $tmp_projstatus = t('NOT SUPPORTED');
+                        $tmp_projstatus = $this->t('NOT SUPPORTED');
                         break;
                       case UPDATE_NOT_CURRENT:
-                        $tmp_projstatus = t('NOT CURRENT');
+                        $tmp_projstatus = $this->t('NOT CURRENT');
                         break;
                       default:
                         $tmp_projstatus = $projval['status'];
@@ -149,21 +155,21 @@ class StatuspageController extends ControllerBase {
 
   public function routes() {
     $config = \Drupal::config('nagios.settings');
-    $routes = array();
+    $routes = [];
     // Declares a single route under the name 'example.content'.
-    // Returns an array of Route objects. 
+    // Returns an array of Route objects.
     $routes['nagios.statuspage'] = new Route(
-      // Path to attach this route to:
+    // Path to attach this route to:
       $config->get('nagios.statuspage.path'),
       // Route defaults:
-      array(
-      '_controller' => $config->get('nagios.statuspage.controller'),
-      '_title' => 'Nagios Status'
-      ),
+      [
+        '_controller' => $config->get('nagios.statuspage.controller'),
+        '_title' => 'Nagios Status',
+      ],
       // Route requirements:
-      array(
-      '_custom_access' => '\Drupal\nagios\Controller\StatuspageController::access'
-      )
+      [
+        '_custom_access' => '\Drupal\nagios\Controller\StatuspageController::access',
+      ]
     );
     return $routes;
   }

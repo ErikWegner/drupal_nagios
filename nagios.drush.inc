@@ -1,5 +1,8 @@
 <?php
 
+use Drupal\Component\Utility\Unicode;
+use Drupal\update\UpdateManagerInterface;
+
 /**
  * @file
  * Provides drush integration for the Nagios module.
@@ -135,7 +138,7 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
     if (count($updates)) {
       foreach ($updates as $project_name => $update_info) {
         // In any case we need to flag security updates.
-        if ($update_info['status'] == UPDATE_NOT_SECURE) {
+        if ($update_info['status'] == UpdateManagerInterface::NOT_SECURE) {
           $flag_insecure = TRUE;
           $module_list[] = $project_name;
         }
@@ -201,41 +204,38 @@ function nagios_updates($data) {
   }
 
   foreach ($data as $project) {
-    if ($project['status'] == UPDATE_NOT_SECURE || $project['status'] == UPDATE_NOT_CURRENT) {
+    if ($project['status'] == UpdateManagerInterface::NOT_SECURE || $project['status'] == UpdateManagerInterface::NOT_CURRENT) {
 
       $security_class = [];
       $version_class = [];
-      if (isset($project['recommended'])) {
-        if ($project['status'] != UPDATE_CURRENT || $project['existing_version'] !== $project['recommended']) {
-
-          // First, figure out what to recommend.
-          // If there's only 1 security update and it has the same version we're
-          // recommending, give it the same CSS class as if it was recommended,
-          // but don't print out a separate "Recommended" line for this project.
-          if (!empty($project['security updates']) && count($project['security updates']) == 1 && $project['security updates'][0]['version'] === $project['recommended']) {
-            $security_class[] = 'version-recommended';
-            $security_class[] = 'version-recommended-strong';
-          }
-          else {
-            $version_class[] = 'version-recommended';
-            // Apply an extra class if we're displaying both a recommended
-            // version and anything else for an extra visual hint.
-            if ($project['recommended'] !== $project['latest_version']
-              || !empty($project['also'])
-              || ($project['install_type'] == 'dev'
-                && isset($project['dev_version'])
-                && $project['latest_version'] !== $project['dev_version']
-                && $project['recommended'] !== $project['dev_version'])
-              || (isset($project['security updates'][0])
-                && $project['recommended'] !== $project['security updates'][0])
-            ) {
-              $version_class[] = 'version-recommended-strong';
-            }
+      if (isset($project['recommended']) && ($project['status'] != UpdateManagerInterface::CURRENT || $project['existing_version'] !== $project['recommended'])) {
+        // First, figure out what to recommend.
+        // If there's only 1 security update and it has the same version we're
+        // recommending, give it the same CSS class as if it was recommended,
+        // but don't print out a separate "Recommended" line for this project.
+        if (!empty($project['security updates']) && count($project['security updates']) == 1 && $project['security updates'][0]['version'] === $project['recommended']) {
+          $security_class[] = 'version-recommended';
+          $security_class[] = 'version-recommended-strong';
+        }
+        else {
+          $version_class[] = 'version-recommended';
+          // Apply an extra class if we're displaying both a recommended
+          // version and anything else for an extra visual hint.
+          if (!empty($project['also'])
+            || $project['recommended'] !== $project['latest_version']
+            || ($project['install_type'] == 'dev'
+              && isset($project['dev_version'])
+              && $project['latest_version'] !== $project['dev_version']
+              && $project['recommended'] !== $project['dev_version'])
+            || (isset($project['security updates'][0])
+              && $project['recommended'] !== $project['security updates'][0])
+          ) {
+            $version_class[] = 'version-recommended-strong';
           }
         }
       }
 
-      $row_key = drupal_strtolower($project['name']);
+      $row_key = Unicode::strtolower($project['name']);
       if (!isset($updates[$row_key])) {
         $updates[$row_key] = [];
       }

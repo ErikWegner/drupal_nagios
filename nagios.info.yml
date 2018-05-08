@@ -1,5 +1,5 @@
 name: Nagios monitoring
-description: Exposes a page that Nagios can monitor
+description: Exposes a page that Nagios or Icinga can monitor
 package: Custom
 type: module
 version: 1.0

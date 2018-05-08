@@ -1,0 +1,10 @@
+{
+    "name": "drupal/nagios",
+    "description": "Exposes a page that Nagios or Icinga can monitor",
+    "authors": [],
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/nagios?version=8.x"
+    },
+    "type": "drupal-module",
+    "minimum-stability": "stable"
+}

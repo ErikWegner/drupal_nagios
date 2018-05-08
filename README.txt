@@ -4,6 +4,7 @@ Copyright 2009 Khalid Baheyeldin http://2bits.com
 Description
 -----------
 The Nagios monitoring module intergrates your Drupal site with with the Nagios.
+Nagios' successors, Icinga and Icinga 2 can also be used with this module.
 
 Nagios is a network and host monitoring application. For more information about
 Nagios, see http://www.nagios.org
@@ -25,14 +26,14 @@ may be overkill for this task.
 Security Note
 -------------
 
-This module exposes the following information from your web site:
+This module optionally exposes the following information from your web site:
 - The number of published nodes.
 - The number of active users.
 - Whether an action requiring the administrator's attention (e.g pending module updates,
   unreadable 'files' directory, ...etc.)
 
 To mitigate the security risks involve, make sure you use a unique ID. However, this is
-not a fool proof solution. If you are concerned about this information being publicly
+not a fool-proof solution. If you are concerned about this information being publicly
 accessible, then don't use this module.
 
 Installation
@@ -234,13 +235,12 @@ Bugs/Features/Patches:
 If you want to report bugs, feature requests, or submit a patch, please do so
 at the project page on the Drupal web site.
 
-Author
-------
+Authors
+-------
 Khalid Baheyeldin (http://baheyeldin.com/khalid and http://2bits.com)
+Greg Harvey (http://www.codeenigma.com)
+Christian Bläul (https://www.linkedin.com/in/blaeul)
 
-If you use this module, find it useful, and want to send the author
-a thank you note, then use the Feedback/Contact page at the URL above.
-
-The author can also be contacted for paid customizations of this
+The authors can also be contacted for paid customizations of this
 and other modules.
 

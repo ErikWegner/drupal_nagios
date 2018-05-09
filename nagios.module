@@ -338,7 +338,7 @@ function nagios_check_requirements() {
   foreach ($reqs as $key => $requirement) {
     if (isset($requirement['severity'])) {
       // Ignore update_core warning if update check is pending
-      if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UPDATE_FETCH_PENDING) {
+      if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UpdateFetcherInterface::FETCH_PENDING) {
         continue;
       }
       if ($requirement['severity'] >= $min_severity) {
@@ -428,7 +428,7 @@ function nagios_check_watchdog() {
   $config = \Drupal::config('nagios.settings');
 
   // Get watchdog result limit.
-  $limit = $config->get('nagios.limit_watchdog.results', 50);
+  $limit = $config->get('nagios.limit_watchdog.results') ?: 50;
   if (!empty($limit)) {
     // Get range.
     $offset = 0;
@@ -471,7 +471,7 @@ function nagios_check_watchdog() {
   ];
 
   $severity = NAGIOS_STATUS_OK; //max this across the result set
-  $min_severity = $config->get('nagios.min_report_severity', NAGIOS_STATUS_WARNING);
+  $min_severity = $config->get('nagios.min_report_severity') ?: NAGIOS_STATUS_WARNING;
   $messages = [];
   $descriptions = [];
   $count = 0;
@@ -551,7 +551,9 @@ function nagios_check_cron() {
   }
   $mins = $config->get('nagios.cron_duration') ?: 60;
 
-  if (REQUEST_TIME > ($cron_last + $mins * 60)) {
+  $next_expected_cron_run = $cron_last + $mins * 60;
+  $request_time = \Drupal::time()->getRequestTime();
+  if ($request_time > $next_expected_cron_run) {
     $data = [
       'status' => NAGIOS_STATUS_CRITICAL,
       'type' => 'state',
@@ -618,8 +620,8 @@ function nagios_check_elysia_cron() {
  * @return array
  */
 function nagios_check_session_anon() {
-  $interval = REQUEST_TIME - 900; // Last 15 minutes
-  $count = (int) nagios_session_count($interval, TRUE);
+  $interval = \Drupal::time()->getRequestTime() - 900; // Last 15 minutes
+  $count = nagios_session_count($interval, TRUE);
 
   $data = [
     'status' => NAGIOS_STATUS_OK,
@@ -639,8 +641,8 @@ function nagios_check_session_anon() {
  * @return array
  */
 function nagios_check_session_auth() {
-  $interval = REQUEST_TIME - 900; // Last 15 minutes
-  $count = (int) nagios_session_count($interval, FALSE);
+  $interval = \Drupal::time()->getRequestTime() - 900; // Last 15 minutes
+  $count = nagios_session_count($interval, FALSE);
 
   $data = [
     'status' => NAGIOS_STATUS_OK,
@@ -771,7 +773,7 @@ function nagios_check_themes() {
  * @param bool $anonymous
  *   TRUE counts only anonymous users. FALSE counts only authenticated users.
  *
- * @return
+ * @return int
  *   The number of users with sessions.
  *
  * @todo There are mostly no anonymous sessions anymore. Split this into a
@@ -783,7 +785,7 @@ function nagios_session_count($timestamp = 0, $anonymous = TRUE) {
   $query->addExpression('COUNT(sid)', 'count');
   $query->condition('timestamp', $timestamp, '>=');
   $query->condition('uid', 0, $anonymous ? '=' : '>');
-  return $query->execute()->fetchField();
+  return (int) $query->execute()->fetchField();
 }
 
 /**

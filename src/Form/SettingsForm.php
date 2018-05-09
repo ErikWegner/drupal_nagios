@@ -39,7 +39,7 @@ class SettingsForm extends ConfigFormBase {
 
     $form['nagios_show_outdated_names'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Show outdated module/theme name?'),
+      '#title' => $this->t('Show outdated module/theme name'),
       '#default_value' => $config->get('nagios.show_outdated_names'),
     ];
 
@@ -52,7 +52,7 @@ class SettingsForm extends ConfigFormBase {
     ];
     $form['nagios_status_page']['nagios_enable_status_page'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Enable status page?'),
+      '#title' => $this->t('Enable status page'),
       '#default_value' => $config->get('nagios.statuspage.enabled'),
     ];
     $form['nagios_status_page']['nagios_page_path'] = [
@@ -69,7 +69,7 @@ class SettingsForm extends ConfigFormBase {
     ];
     $form['nagios_status_page']['nagios_enable_status_page_get'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Enable Unique ID checking via URL on status page?'),
+      '#title' => $this->t('Enable Unique ID checking via URL on status page'),
       '#default_value' => $config->get('nagios.statuspage.getparam'),
       '#description' => $this->t('If enabled the $_GET variable "unique_id" is used for checking the correct Unique ID instead of "User Agent" ($_SERVER[\'HTTP_USER_AGENT\']). This alternative checking is only working if the URL is containing the value like "/nagios?unique_id=*****". This feature is useful to avoid webserver stats with the Unique ID as "User Agent" and helpful for human testing.'),
     ];

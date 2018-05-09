@@ -33,19 +33,17 @@ function nagios_status() {
  */
 function nagios_functions() {
   $functions = [
-    'requirements' => $this->t('Checking of hook_requirements. This includes the following: module updates, database schema, files directory writability, update.php protected, Lots of other good stuff ...'),
-    'watchdog' => $this->t('Check recent watchdog entries'),
-    'cron' => $this->t('Check whether cron has been running regularly'),
-    'session_anon' => $this->t('Check the number of anonymous sessions for nagios performance data'),
-    'session_auth' => $this->t('Check the number of authenticated sessions for nagios performance data'),
-    'nodes' => $this->t('Check the number of nodes for nagios performance data'),
-    'users' => $this->t('Check the number of users for nagios performance data'),
-    'modules' => $this->t('Check the number of modules for nagios performance data'),
-    'themes' => $this->t('Check the number of themes for nagios performance data'),
+    'watchdog' => t('Check recent watchdog entries'),
+    'cron' => t('Check whether cron has been running regularly'),
+    'session_anon' => t('Check the number of anonymous sessions for nagios performance data'),
+    'session_auth' => t('Check the number of authenticated sessions for nagios performance data'),
+    'users' => t('Check the number of users for nagios performance data'),
+    'modules' => t('Check the number of modules for nagios performance data'),
+    'themes' => t('Check the number of themes for nagios performance data'),
   ];
   $moduleHandler = \Drupal::moduleHandler();
   if ($moduleHandler->moduleExists('elysia_cron')) {
-    $functions['elysia_cron'] = $this->t('Check whether elysia cron has been running regularly');
+    $functions['elysia_cron'] = t('Check whether elysia cron has been running regularly');
   }
   return $functions;
 }
@@ -110,31 +108,31 @@ function nagios_nagios_settings() {
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
-    '#title' => $this->t('Thresholds'),
-    '#description' => $this->t('Thresholds for reporting critical alerts to Nagios.'),
+    '#title' => t('Thresholds'),
+    '#description' => t('Thresholds for reporting critical alerts to Nagios.'),
   ];
 
   $form[$group]['nagios_cron_duration'] = [
     '#type' => 'textfield',
-    '#title' => $this->t('Cron duration'),
-    '#description' => $this->t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.'),
+    '#title' => t('Cron duration'),
+    '#description' => t('Issue a critical alert when cron has not been running for this duration (in minutes). Default is 60 minutes.'),
     '#configname' => 'cron_duration',
   ];
 
   if ($moduleHandler->moduleExists('elysia_cron')) {
     $form[$group]['nagios_elysia_cron_duration'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Elysia cron duration'),
-      '#description' => $this->t('Issue a critical alert when elysia cron has not been running for this duration (in minutes). Default is 60 minutes.'),
+      '#title' => t('Elysia cron duration'),
+      '#description' => t('Issue a critical alert when elysia cron has not been running for this duration (in minutes). Default is 60 minutes.'),
       '#configname' => 'elysia_cron_duration',
     ];
   }
 
   $form[$group]['nagios_min_report_severity'] = [
     '#type' => 'select',
-    '#title' => $this->t('Mininum report severity'),
+    '#title' => t('Mininum report severity'),
     '#options' => nagios_status(),
-    '#description' => $this->t('Issue an alert only for this minimum severity, not for lower severities.'),
+    '#description' => t('Issue an alert only for this minimum severity, not for lower severities.'),
     '#configname' => 'min_report_severity',
   ];
 
@@ -171,10 +169,10 @@ function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormS
 
       $form['nagios'] = [
         '#type' => 'fieldset',
-        '#title' => $this->t('Nagios Monitoring'),
+        '#title' => t('Nagios Monitoring'),
         'nagios_ignore' => [
           '#type' => 'checkbox',
-          '#title' => $this->t('Ignore from Nagios'),
+          '#title' => t('Ignore from Nagios'),
           '#weight' => 200,
           '#default_value' => isset($nagios_ignored_themes[$theme_name]) && $nagios_ignored_themes[$theme_name],
         ],
@@ -350,7 +348,7 @@ function nagios_check_requirements() {
     }
   }
   if (empty($descriptions)) {
-    $desc = $this->t('No information.');
+    $desc = t('No information.');
   }
   else {
     $desc = join(', ', $descriptions);
@@ -363,28 +361,28 @@ function nagios_check_requirements() {
       $data = [
         'status' => NAGIOS_STATUS_OK,
         'type' => 'state',
-        'text' => $this->t('No known issues at this time.'),
+        'text' => t('No known issues at this time.'),
       ];
       break;
     case REQUIREMENT_WARNING:
       $data = [
         'status' => NAGIOS_STATUS_WARNING,
         'type' => 'state',
-        'text' => $this->t('@desc', ['@desc' => $desc]),
+        'text' => t('@desc', ['@desc' => $desc]),
       ];
       break;
     case REQUIREMENT_ERROR:
       $data = [
         'status' => NAGIOS_STATUS_CRITICAL,
         'type' => 'state',
-        'text' => $this->t('@desc', ['@desc' => $desc]),
+        'text' => t('@desc', ['@desc' => $desc]),
       ];
       break;
     default:
       $data = [
         'status' => NAGIOS_STATUS_UNKNOWN,
         'type' => 'state',
-        'text' => $this->t('severity is @severity', ['@severity' => $severity]),
+        'text' => t('severity is @severity', ['@severity' => $severity]),
       ];
       break;
   }
@@ -453,7 +451,7 @@ function nagios_check_watchdog() {
     return [
       'status' => NAGIOS_STATUS_UNKNOWN,
       'type' => 'state',
-      'text' => $this->t('Unable to SELECT FROM {watchdog}'),
+      'text' => t('Unable to SELECT FROM {watchdog}'),
     ];
   }
 
@@ -531,7 +529,7 @@ function nagios_check_watchdog() {
     'data' => [
       'status' => $severity,
       'type' => 'state',
-      'text' => $this->t('@desc', ['@desc' => $desc])
+      'text' => t('@desc', ['@desc' => $desc])
       //These watchdog message have translations? Really???
     ],
   ];
@@ -557,7 +555,7 @@ function nagios_check_cron() {
     $data = [
       'status' => NAGIOS_STATUS_CRITICAL,
       'type' => 'state',
-      'text' => $this->t('cron not running @mins mins', ['@mins' => $mins]),
+      'text' => t('cron not running @mins mins', ['@mins' => $mins]),
     ];
   }
   else {
@@ -588,7 +586,7 @@ function nagios_check_elysia_cron() {
   }
   $text = '';
   foreach ($err_crons as $cron) {
-    $text .= $this->t('Elysia cron ":cron" last aborted on ":abort"' . PHP_EOL, [
+    $text .= t('Elysia cron ":cron" last aborted on ":abort"' . PHP_EOL, [
       ':cron' => $cron->name,
       ':abort' => $cron->last_abort_function,
     ]);

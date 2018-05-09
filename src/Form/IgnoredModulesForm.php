@@ -2,6 +2,7 @@
 
 namespace Drupal\nagios\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
@@ -23,17 +24,22 @@ class IgnoredModulesForm extends ConfigFormBase {
    *
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The factory for configuration objects.
    */
-  public function __construct(ModuleHandlerInterface $module_handler) {
+  public function __construct(ModuleHandlerInterface $module_handler, ConfigFactoryInterface $config_factory) {
     $this->moduleHandler = $module_handler;
+    parent::__construct($config_factory);
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
+    /** @noinspection PhpParamsInspection */
     return new static(
-      $container->get('module_handler')
+      $container->get('module_handler'),
+      $container->get('config.factory')
     );
   }
 

@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\update\UpdateFetcherInterface;
 
 // Copyright 2009 Khalid Baheyeldin http://2bits.com
 // 2015 Erik Wegner
@@ -51,6 +52,10 @@ function nagios_functions() {
 
 /**
  * Custom invoke function
+ *
+ * @param string $hook
+ *
+ * @return array
  */
 function nagios_invoke_all($hook = 'nagios') {
   // This is a custom invoke function that returns a keyed array
@@ -141,10 +146,13 @@ function nagios_nagios_settings() {
  *
  * Modify the module display view by adding a nagios ignore link to every module
  * description.
+ *
+ * @param $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
  */
-function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  if (!\Drupal::currentUser()
-      ->hasPermission('administer nagios ignore') || isset($form['confirm'])) {
+function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  if (isset($form['confirm']) || !\Drupal::currentUser()
+      ->hasPermission('administer nagios ignore')) {
     return;
   }
 
@@ -168,7 +176,7 @@ function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormS
           '#type' => 'checkbox',
           '#title' => $this->t('Ignore from Nagios'),
           '#weight' => 200,
-          '#default_value' => isset($nagios_ignored_themes[$theme_name]) && $nagios_ignored_themes[$theme_name] ? TRUE : FALSE,
+          '#default_value' => isset($nagios_ignored_themes[$theme_name]) && $nagios_ignored_themes[$theme_name],
         ],
       ];
 
@@ -183,8 +191,12 @@ function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormS
  * Saves the Nagios theme ignore status to the 'nagios_ignored_themes' variable.
  * Variable contains an array of theme names to be ignored in the form
  * 'theme_machine_name' => TRUE
+ *
+ * @param $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
  */
-function nagios_system_theme_settings_form_submit(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+function nagios_system_theme_settings_form_submit(/** @noinspection PhpUnusedParameterInspection */
+  &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
   $buildinfo = $form_state->getBuildInfo();
   // Grab the name of the theme.
   if (isset($buildinfo['args'][0]) && !empty($buildinfo['args'][0])) {
@@ -229,7 +241,7 @@ function nagios_nagios() {
  *
  * Calls hook_requirements on all modules to gather info.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_requirements() {
   $config = \Drupal::config('nagios.settings');
@@ -238,17 +250,6 @@ function nagios_check_requirements() {
   module_load_include('inc', 'update', 'update.compare');
 
   drupal_load_updates();
-
-  // Get the run-time requirements and status information.
-  $moduleHandler = \Drupal::service('module_handler');
-  $reqs = $moduleHandler->invokeAll('requirements', ['runtime']);
-
-  // module_invoke_all('requirements', 'runtime') returns an array that isn't
-  // keyed by the module name, eg we might get a key 'ctools_css_cache'.
-  // We have no way of knowing which module set this, and we can't guess based
-  // on the name, as removing everything that begins with 'ctools_' might remove
-  // data from other ctools sub-modules that we want to still monitor.
-  // The only safe way is to use module_invoke, calling each module in turn.
 
   $project_data = \Drupal::service('update.manager')->getProjects();
   $nagios_ignored_modules = $config->get('nagios.ignored_modules') ?: [];
@@ -278,9 +279,19 @@ function nagios_check_requirements() {
     unset($data[$key]);
   }
 
+
+  // Get the run-time requirements and status information.
+  // module_invoke_all('requirements', 'runtime') returns an array that isn't
+  // keyed by the module name, eg we might get a key 'ctools_css_cache'.
+  // We have no way of knowing which module set this, and we can't guess based
+  // on the name, as removing everything that begins with 'ctools_' might remove
+  // data from other ctools sub-modules that we want to still monitor.
+  // The only safe way is to use module_invoke, calling each module in turn.
+  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler */
+  $moduleHandler = \Drupal::service('module_handler');
+
   // Cycle through enabled modules for requirements checks.
   $reqs = [];
-  $core_modules = array_keys($project_data['drupal']['includes']);
   foreach ($enabled_modules as $module_name) {
 
     $requirements_data = $moduleHandler->invoke($module_name, 'requirements', ['runtime']);
@@ -293,25 +304,21 @@ function nagios_check_requirements() {
         // nagios module.
         unset($requirements_data['update_contrib']);
         // Now we need to loop through all modules again to reset 'update_contrib'.
-        foreach ($enabled_modules as $module_name) {
+        foreach ($enabled_modules as $inner_module_name) {
           // Double check we're not processing a core module.
-          if (!in_array($module_name, array_keys($project_data['drupal']['includes']))) {
-            // If the module is a sub-module (eg views_ui) then we need to set the status key.
-            // Without this,  _update_requirement_check() will return severity = 2.
-            if (isset($data[$module_name]['status']) && is_numeric($data[$module_name]['status'])) {
-              // Within this clause, only contrib modules are processed. Get update
-              // status for the current one, and store data as it would be left
-              // by update_requirements() function.
-              $contrib_req = _update_requirement_check($data[$module_name], 'contrib');
-              $contrib_req['name'] = $module_name;
-              // If module up to date, set a severity of -1 for sorting purposes.
-              if (!isset($contrib_req['severity'])) {
-                $contrib_req['severity'] = -1;
-              }
-              // Build an array of required contrib updates.
-              if ($contrib_req) {
-                $module_data[] = $contrib_req;
-              }
+          if (!array_key_exists($inner_module_name, $project_data['drupal']['includes']) && isset($data[$inner_module_name]['status']) && is_numeric($data[$inner_module_name]['status'])) {
+            // Within this clause, only contrib modules are processed. Get update
+            // status for the current one, and store data as it would be left
+            // by update_requirements() function.
+            $contrib_req = _update_requirement_check($data[$inner_module_name], 'contrib');
+            $contrib_req['name'] = $inner_module_name;
+            // If module up to date, set a severity of -1 for sorting purposes.
+            if (!isset($contrib_req['severity'])) {
+              $contrib_req['severity'] = -1;
+            }
+            // Build an array of required contrib updates.
+            if ($contrib_req) {
+              $module_data[] = $contrib_req;
             }
           }
         }
@@ -391,7 +398,7 @@ function nagios_check_requirements() {
 /**
  * Check Drupal {watchdog} table recent entries.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_watchdog() {
   //@TODO Allow LIMIT and OFFSET to be passed in or configurable, or use existing Drupal settings
@@ -401,6 +408,7 @@ function nagios_check_watchdog() {
   //@TODO Allow datetime ranges
 
   // Constuct base select query.
+  /** @noinspection PhpDeprecationInspection */
   $query = db_select('watchdog', 'w');
   $query->fields('w', [
     'wid',
@@ -470,7 +478,7 @@ function nagios_check_watchdog() {
   while ($row = $result->fetchAssoc()) {
     // Set timestamp of the first watchdog error for use when restricting logs to only new entries.
     if ($count == 0) {
-      $limit_watchdog_timestamp = $state->set('limit_watchdog_timestamp', $row['timestamp']);
+      $state->set('limit_watchdog_timestamp', $row['timestamp']);
       $count++;
     }
 
@@ -493,12 +501,12 @@ function nagios_check_watchdog() {
     $variables = unserialize($row['variables']);
     if (is_array($variables)) {
       foreach ($variables as $key => $value) {
-        $message = str_replace("$key", $value, $message);
+        $message = str_replace((string) $key, $value, $message);
       }
     }
 
     // Add message to messages array only if there isn't already an identical entry.
-    if (!in_array($message, $messages)) {
+    if (!in_array($message, $messages, TRUE)) {
       $messages[] = $message;
     }
     else {
@@ -532,7 +540,7 @@ function nagios_check_watchdog() {
 /**
  * Check when the Drupal cron system was last invoked.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_cron() {
   $config = \Drupal::config('nagios.settings');
@@ -567,9 +575,10 @@ function nagios_check_cron() {
 /**
  * Check when the Drupal cron system was last invoked.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_elysia_cron() {
+  /** @noinspection PhpDeprecationInspection */
   $result = db_query('select * from elysia_cron where last_aborted <> 0');
   $err_crons = [];
   foreach ($result as $blocked_cron) {
@@ -606,7 +615,7 @@ function nagios_check_elysia_cron() {
 /**
  * Report the number of anonymous sessions.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_session_anon() {
   $interval = REQUEST_TIME - 900; // Last 15 minutes
@@ -627,7 +636,7 @@ function nagios_check_session_anon() {
 /**
  * Report the number of logged in sessions.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_session_auth() {
   $interval = REQUEST_TIME - 900; // Last 15 minutes
@@ -648,7 +657,7 @@ function nagios_check_session_auth() {
 /**
  * Report the number of published nodes.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_nodes() {
   // Include number of active nodes in the report
@@ -670,7 +679,7 @@ function nagios_check_nodes() {
 /**
  * Report the number of active user accounts.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_users() {
   // Include number of active users in the report
@@ -714,6 +723,10 @@ function nagios_nagios_checks() {
 
 /**
  * Implements hook_nagios_check().
+ *
+ * @param $function
+ *
+ * @return mixed
  */
 function nagios_nagios_check($function) {
   // We don't bother to check if the function has been enabled by the user.
@@ -727,7 +740,7 @@ function nagios_nagios_check($function) {
 /**
  * Report the number of enabled modules.
  *
- * @return Array
+ * @return array
  */
 function nagios_check_themes() {
   $config = \Drupal::config('core.extension');
@@ -752,10 +765,10 @@ function nagios_check_themes() {
  * specified time. Can count either anonymous sessions or authenticated
  * sessions.
  *
- * @param $timestamp
+ * @param int $timestamp
  *   A Unix timestamp. Users who have been active since this time will be
  *   counted. The default is 0, which counts all existing sessions.
- * @param $anonymous
+ * @param bool $anonymous
  *   TRUE counts only anonymous users. FALSE counts only authenticated users.
  *
  * @return
@@ -765,6 +778,7 @@ function nagios_check_themes() {
  *   separate module providing proper user statistics.
  */
 function nagios_session_count($timestamp = 0, $anonymous = TRUE) {
+  /** @noinspection PhpDeprecationInspection */
   $query = db_select('sessions');
   $query->addExpression('COUNT(sid)', 'count');
   $query->condition('timestamp', $timestamp, '>=');
@@ -774,9 +788,14 @@ function nagios_session_count($timestamp = 0, $anonymous = TRUE) {
 
 /**
  * Helper function to sort modules by severity with usort().
+ *
+ * @param $a
+ * @param $b
+ *
+ * @return int
  */
 function _nagios_updates_sort_by_severity($a, $b) {
-  if (isset($a['severity']) && isset($b['severity'])) {
+  if (isset($a['severity'], $b['severity'])) {
     if ($a['severity'] == $b['severity']) {
       return 0;
     }

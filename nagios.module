@@ -42,6 +42,12 @@ function nagios_functions() {
     'themes' => t('Check the number of themes for nagios performance data'),
   ];
   $moduleHandler = \Drupal::moduleHandler();
+  if ($moduleHandler->moduleExists('update')) {
+    $functions['requirements'] = t('Checking of hook_requirements. This includes the following: module updates, database schema, files directory writability, update.php protected, Lots of other good stuff ...');
+  }
+  if ($moduleHandler->moduleExists('node')) {
+    $functions['nodes'] = t('Check the number of nodes for nagios performance data');
+  }
   if ($moduleHandler->moduleExists('elysia_cron')) {
     $functions['elysia_cron'] = t('Check whether elysia cron has been running regularly');
   }

@@ -44,22 +44,15 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('nagios.show_outdated_names'),
     ];
 
-    $aUrlInfo = [
-      ':url' => Url::fromRoute('system.performance_settings')
-        ->toString(),
-    ];
     $form['nagios_status_page'] = [
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
       '#title' => $this->t('Status page settings'),
-      '#description' => $this->t(
-        'Control the availability and location of the HTTP status page. NOTE: you must clear the <a href=":url">menu cache</a> for changes to these settings to register.',
-        $aUrlInfo),
     ];
     $form['nagios_status_page']['nagios_enable_status_page'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Enable status page'),
+      '#title' => $this->t('Enable HTTP status page'),
       '#default_value' => $config->get('nagios.statuspage.enabled'),
     ];
     $only_enabled_if_page = ['disabled' => ['#edit-nagios-enable-status-page' => ['checked' => FALSE]]];
@@ -73,7 +66,9 @@ class SettingsForm extends ConfigFormBase {
     $form['nagios_status_page']['nagios_page_controller'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Nagios page controller'),
-      '#description' => $this->t('Enter the name of the controller and function to be used by the Nagios status page. Take care and be sure this function exists before clearing the menu cache!'),
+      '#description' =>
+        $this->t('Enter the name of the controller and function to be used by the Nagios status page.') . ' ' .
+        $this->t('Take care and be sure this function exists before submitting this form!'),
       '#default_value' => $config->get('nagios.statuspage.controller'),
       '#states' => $only_enabled_if_page,
     ];
@@ -82,7 +77,7 @@ class SettingsForm extends ConfigFormBase {
       '#type' => 'radios',
       '#default_value' => (int) $config->get('nagios.statuspage.getparam'),
       '#options' => [
-        0 => $this->t('The HTTP User Agent has to be exactly the Unique ID.'),
+        0 => $this->t('The HTTP User Agent has to be exactly the Unique ID'),
         1 => $this->t('Enable Unique ID checking via GET parameter in the URL status page'),
       ],
       '#description' => $this->getUserAgentRadioDesc(),
@@ -211,7 +206,14 @@ class SettingsForm extends ConfigFormBase {
     $config = $this->config('nagios.settings');
     $config->set('nagios.ua', $form_state->getValue('nagios_ua'));
     $config->set('nagios.show_outdated_names', $form_state->getValue('nagios_show_outdated_names'));
-    $config->set('nagios.statuspage.enabled', (bool) $form_state->getValue('nagios_enable_status_page'));
+    $status_page = $form_state->getValue('nagios_enable_status_page');
+    $config->set('nagios.statuspage.enabled', (bool) $status_page);
+    if ($status_page) {
+      $route_info_changed =
+        $config->get('nagios.statuspage.path') != $form_state->getValue('nagios_page_path') ||
+        $config->get('nagios.statuspage.controller') != $form_state->getValue('nagios_page_controller');
+    }
+
     $config->set('nagios.statuspage.path', $form_state->getValue('nagios_page_path'));
     $config->set('nagios.statuspage.controller', $form_state->getValue('nagios_page_controller'));
     $config->set('nagios.statuspage.getparam', $form_state->getValue('nagios_enable_status_page_get'));
@@ -246,6 +248,11 @@ class SettingsForm extends ConfigFormBase {
     }
 
     $config->save();
+
+    if (!empty($route_info_changed)) {
+      \Drupal::service('router.builder')->rebuild();
+      \Drupal::cache('menu')->invalidateAll();
+    }
 
     parent::submitForm($form, $form_state);
   }

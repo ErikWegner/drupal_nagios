@@ -34,4 +34,5 @@ class MaintenanceModeSubscriber implements EventSubscriberInterface {
     $events[KernelEvents::REQUEST][] = ['onKernelRequestMaintenance', 35];
     return $events;
   }
+
 }

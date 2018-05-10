@@ -7,7 +7,7 @@ use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 use Drupal\nagios\Controller\StatuspageController;
 
 /**
- * Tests the functionality to monitor cron
+ * Tests the functionality to monitor cron.
  *
  * @group nagios
  */
@@ -21,7 +21,7 @@ class NagiosCheckTest extends EntityKernelTestBase {
   public static $modules = ['nagios', 'user'];
 
   /**
-   * Perform any initial set up tasks that run before every test method
+   * Perform any initial set up tasks that run before every test method.
    */
   public function setUp() {
     parent::setUp();
@@ -79,5 +79,6 @@ class NagiosCheckTest extends EntityKernelTestBase {
     $config->save();
     self::assertTrue($statuspage_controller->access()->isAllowed());
   }
+
 }
 

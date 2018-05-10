@@ -1,13 +1,19 @@
 <?php
 
+/**
+ * @file
+ * Main file for Nagios service monitoring.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\nagios\Controller\StatuspageController;
 use Drupal\update\UpdateFetcherInterface;
-use \Drupal\nagios\Controller\StatuspageController;
 
 StatuspageController::setNagiosStatusConstants();
 
 /**
- * Mapping of defines to text strings that Nagios understands
+ * Mapping of defines to text strings that Nagios understands.
  */
 function nagios_status() {
   return [
@@ -45,14 +51,14 @@ function nagios_functions() {
 }
 
 /**
- * Custom invoke function
+ * Custom invoke function that checks the config to decide which modules to
+ * include.
  *
  * @param string $hook
  *
- * @return array
+ * @return array keyed by module name
  */
 function nagios_invoke_all($hook = 'nagios') {
-  // This is a custom invoke function that returns a keyed array
   $return = [];
   $args = func_get_args();
   $moduleHandler = \Drupal::moduleHandler();
@@ -71,7 +77,7 @@ function nagios_invoke_all($hook = 'nagios') {
 }
 
 /**
- * Implementation of hook_nagios_info()
+ * Implements hook_nagios_info()
  */
 function nagios_nagios_info() {
   return [
@@ -141,10 +147,10 @@ function nagios_nagios_settings() {
  * Modify the module display view by adding a nagios ignore link to every module
  * description.
  *
- * @param $form
- * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @param array $form
+ * @param FormStateInterface $form_state
  */
-function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+function nagios_form_system_theme_settings_alter(&$form, FormStateInterface $form_state) {
   if (isset($form['confirm']) || !\Drupal::currentUser()
       ->hasPermission('administer nagios ignore')) {
     return;
@@ -162,7 +168,6 @@ function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormS
     $projects_data = \Drupal::service('update.manager')->getProjects();
     if (array_key_exists($theme_name, $projects_data)) {
       // This is a settings page for a non-core theme, so add the checkbox.
-
       $form['nagios'] = [
         '#type' => 'fieldset',
         '#title' => t('Nagios Monitoring'),
@@ -184,13 +189,13 @@ function nagios_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormS
  *
  * Saves the Nagios theme ignore status to the 'nagios_ignored_themes' variable.
  * Variable contains an array of theme names to be ignored in the form
- * 'theme_machine_name' => TRUE
+ * 'theme_machine_name' => TRUE.
  *
- * @param $form
- * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @param array $form
+ * @param FormStateInterface $form_state
  */
 function nagios_system_theme_settings_form_submit(/** @noinspection PhpUnusedParameterInspection */
-  &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  &$form, FormStateInterface $form_state) {
   $buildinfo = $form_state->getBuildInfo();
   // Grab the name of the theme.
   if (isset($buildinfo['args'][0]) && !empty($buildinfo['args'][0])) {
@@ -212,7 +217,7 @@ function nagios_system_theme_settings_form_submit(/** @noinspection PhpUnusedPar
 }
 
 /**
- * Implementation of hook_nagios
+ * Implements hook_nagios().
  */
 function nagios_nagios() {
   $config = \Drupal::config('nagios.settings');
@@ -229,13 +234,13 @@ function nagios_nagios() {
   return $status;
 }
 
-
 /**
  * Check is all Drupal requirenemts are satisfied.
  *
  * Calls hook_requirements on all modules to gather info.
  *
  * @return array
+ *   Array containing state data
  */
 function nagios_check_requirements() {
   $config = \Drupal::config('nagios.settings');
@@ -272,7 +277,6 @@ function nagios_check_requirements() {
   foreach ($nagios_ignored_projects as $key => $value) {
     unset($data[$key]);
   }
-
 
   // Get the run-time requirements and status information.
   // module_invoke_all('requirements', 'runtime') returns an array that isn't
@@ -325,13 +329,13 @@ function nagios_check_requirements() {
     }
   }
 
-  // Check the requirements as to the most severe status
+  // Check the requirements as to the most severe status:
   $descriptions = [];
   $severity = REQUIREMENT_OK;
   $min_severity = $config->get('nagios.min_report_severity');
   foreach ($reqs as $key => $requirement) {
     if (isset($requirement['severity'])) {
-      // Ignore update_core warning if update check is pending
+      // Ignore update_core warning if update check is pending:
       if (($key == 'update_core' || $key == 'update_contrib') && $requirement['severity'] == REQUIREMENT_ERROR && $requirement['reason'] == UpdateFetcherInterface::FETCH_PENDING) {
         continue;
       }
@@ -347,10 +351,10 @@ function nagios_check_requirements() {
     $desc = t('No information.');
   }
   else {
-    $desc = join(', ', $descriptions);
+    $desc = implode(', ', $descriptions);
   }
 
-  // Create a status to pass back, and a text description too
+  // Create a status to pass back, and a text description too:
   switch ($severity) {
     case REQUIREMENT_OK:
     case REQUIREMENT_INFO:
@@ -360,6 +364,7 @@ function nagios_check_requirements() {
         'text' => t('No known issues at this time.'),
       ];
       break;
+
     case REQUIREMENT_WARNING:
       $data = [
         'status' => NAGIOS_STATUS_WARNING,
@@ -367,6 +372,7 @@ function nagios_check_requirements() {
         'text' => t('@desc', ['@desc' => $desc]),
       ];
       break;
+
     case REQUIREMENT_ERROR:
       $data = [
         'status' => NAGIOS_STATUS_CRITICAL,
@@ -374,6 +380,7 @@ function nagios_check_requirements() {
         'text' => t('@desc', ['@desc' => $desc]),
       ];
       break;
+
     default:
       $data = [
         'status' => NAGIOS_STATUS_UNKNOWN,
@@ -451,9 +458,9 @@ function nagios_check_watchdog() {
     ];
   }
 
-  //RFC3164/Watchdog has 8 levels. Nagios module has 3 (plus UNKNOWN). This maps one to the other.
+  // RFC3164/Watchdog has 8 levels. Nagios module has 3 (plus UNKNOWN).
+  // This maps Watchdog => Nagios.
   $severity_translation = [
-    //watchdog => nagios
     RfcLogLevel::DEBUG => NAGIOS_STATUS_OK,
     RfcLogLevel::INFO => NAGIOS_STATUS_OK,
     RfcLogLevel::NOTICE => NAGIOS_STATUS_OK,
@@ -464,7 +471,9 @@ function nagios_check_watchdog() {
     RfcLogLevel::EMERGENCY => NAGIOS_STATUS_CRITICAL,
   ];
 
-  $severity = NAGIOS_STATUS_OK; //max this across the result set
+  // Maximize this across the result set:
+  $severity = NAGIOS_STATUS_OK;
+
   $min_severity = $config->get('nagios.min_report_severity') ?: NAGIOS_STATUS_WARNING;
   $messages = [];
   $descriptions = [];
@@ -491,7 +500,7 @@ function nagios_check_watchdog() {
 
     // Create error message.
     $message = "$row[type] $row[message]";
-    //@TODO Untangle l(truncate_utf8(_dblog_format_message($dblog), 56, TRUE, TRUE), 'admin/reports/event/'. $dblog->wid, array('html' => TRUE)) and use it here
+    // @TODO Untangle l(truncate_utf8(_dblog_format_message($dblog), 56, TRUE, TRUE), 'admin/reports/event/'. $dblog->wid, array('html' => TRUE)) and use it here
     $variables = unserialize($row['variables']);
     if (is_array($variables)) {
       foreach ($variables as $key => $value) {
@@ -517,16 +526,14 @@ function nagios_check_watchdog() {
   }
 
   // Join all descriptions together into a string.
-  $desc = join(', ', $descriptions);
+  $desc = implode(', ', $descriptions);
 
-  //why is an extra array wrapped around here?
   return [
     'key' => 'WATCHDOG',
     'data' => [
       'status' => $severity,
       'type' => 'state',
-      'text' => t('@desc', ['@desc' => $desc])
-      //These watchdog message have translations? Really???
+      'text' => t('@desc', ['@desc' => $desc]),
     ],
   ];
 }
@@ -535,6 +542,7 @@ function nagios_check_watchdog() {
  * Check when the Drupal cron system was last invoked.
  *
  * @return array
+ *   Array containing state data
  */
 function nagios_check_cron() {
   $config = \Drupal::config('nagios.settings');
@@ -632,7 +640,7 @@ function nagios_check_session_anon() {
 /**
  * Report the number of logged in sessions.
  *
- * @return array
+ * @return array with performance data
  */
 function nagios_check_session_auth() {
   $interval = \Drupal::time()->getRequestTime() - 900; // Last 15 minutes
@@ -656,7 +664,7 @@ function nagios_check_session_auth() {
  * @return array
  */
 function nagios_check_nodes() {
-  // Include number of active nodes in the report
+  // Include number of active nodes in the report.
   $connection = \Drupal::database();
   $count = (int) $connection->query("SELECT COUNT(*) FROM {node_field_data} WHERE status = 1")
     ->fetchField();
@@ -678,7 +686,7 @@ function nagios_check_nodes() {
  * @return array
  */
 function nagios_check_users() {
-  // Include number of active users in the report
+  // Include number of active users in the report.
   $connection = \Drupal::database();
   $count = (int) $connection->query("SELECT COUNT(*) FROM {users_field_data} WHERE status = 1")
     ->fetchField();
@@ -720,9 +728,9 @@ function nagios_nagios_checks() {
 /**
  * Implements hook_nagios_check().
  *
- * @param $function
+ * @param string $function
  *
- * @return mixed
+ * @return array with performance information
  */
 function nagios_nagios_check($function) {
   // We don't bother to check if the function has been enabled by the user.
@@ -736,7 +744,7 @@ function nagios_nagios_check($function) {
 /**
  * Report the number of enabled modules.
  *
- * @return array
+ * @return array with performance information
  */
 function nagios_check_themes() {
   $config = \Drupal::config('core.extension');
@@ -785,8 +793,8 @@ function nagios_session_count($timestamp = 0, $anonymous = TRUE) {
 /**
  * Helper function to sort modules by severity with usort().
  *
- * @param $a
- * @param $b
+ * @param array $a module data
+ * @param array $b module data
  *
  * @return int
  */

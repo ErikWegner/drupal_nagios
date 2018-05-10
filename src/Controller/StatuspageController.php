@@ -9,12 +9,23 @@ use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Route;
 
+/**
+ * Class StatuspageController produces the HTTP output that the bash script in
+ * the nagios-plugin directory understands.
+ *
+ * @package Drupal\nagios\Controller
+ */
 class StatuspageController extends ControllerBase {
 
+  /**
+   * Main function building the string to show via HTTP.
+   *
+   * @return Response
+   */
   public function content() {
     $config = \Drupal::config('nagios.settings');
 
-    // Disable cache
+    // Disable cache:
     \Drupal::service('page_cache_kill_switch')->trigger();
 
     $args = func_get_args();
@@ -36,7 +47,7 @@ class StatuspageController extends ControllerBase {
 
     if ($request_code == $ua || \Drupal::currentUser()
         ->hasPermission('administer site configuration')) {
-      // Authorized so calling other modules
+      // Authorized, so go ahead calling all modules:
       if ($module) {
         // A specific module has been requested.
         $nagios_data = [];
@@ -48,7 +59,8 @@ class StatuspageController extends ControllerBase {
       }
     }
     else {
-      // This is not an authorized unique id or uer, so just return this default status.
+      // This is not an authorized unique id or uer, so just return this default
+      // status.
       $nagios_data = [
         'nagios' => [
           'DRUPAL' => [
@@ -60,7 +72,7 @@ class StatuspageController extends ControllerBase {
       ];
     }
 
-    // Find the highest level to be the overall status
+    // Find the highest level to be the overall status:
     $severity = NAGIOS_STATUS_OK;
     $min_severity = $config->get('nagios.min_report_severity');
 
@@ -69,13 +81,13 @@ class StatuspageController extends ControllerBase {
 
     foreach ($nagios_data as $module_name => $module_data) {
       foreach ($module_data as $key => $value) {
-        // Check status and set global severity
+        // Check status and set global severity:
         if (is_array($value) && array_key_exists('status', $value) && $value['status'] >= $min_severity) {
           $severity = max($severity, $value['status']);
         }
         switch ($value['type']) {
           case 'state':
-            // If status is larger then minimum severity
+            // Complain only if status is larger then minimum severity:
             if ($value['status'] >= $min_severity) {
               $tmp_state = $key . ':' . $codes[$value['status']];
             }
@@ -105,15 +117,19 @@ class StatuspageController extends ControllerBase {
                     case UpdateManagerInterface::NOT_SECURE:
                       $tmp_projstatus = $this->t('NOT SECURE');
                       break;
+
                     case UpdateManagerInterface::REVOKED:
                       $tmp_projstatus = $this->t('REVOKED');
                       break;
+
                     case UpdateManagerInterface::NOT_SUPPORTED:
                       $tmp_projstatus = $this->t('NOT SUPPORTED');
                       break;
+
                     case UpdateManagerInterface::NOT_CURRENT:
                       $tmp_projstatus = $this->t('NOT CURRENT');
                       break;
+
                     default:
                       $tmp_projstatus = $projval['status'];
                   }
@@ -137,20 +153,25 @@ class StatuspageController extends ControllerBase {
       }
     }
 
-    // Identifier that we check on the other side
+    // Identifier that we check on the bash side:
     $output = "\n" . 'nagios=' . $codes[$severity] . ', ';
 
     $output .= implode(', ', $output_state) . ' | ' . implode('; ', $output_perf) . "\n";
 
     $response = new Response($output, Response::HTTP_OK, ['Content-Type' => 'text/plain']);
 
-    // Disable browser cache
+    // Disable browser cache:
     $response->setMaxAge(0);
     $response->setExpires();
 
     return $response;
   }
 
+  /**
+   * Route callback to allow for user-defined URL of status page.
+   *
+   * @return Route[]
+   */
   public function routes() {
     $config = \Drupal::config('nagios.settings');
     $routes = [];
@@ -172,18 +193,29 @@ class StatuspageController extends ControllerBase {
     return $routes;
   }
 
+  /**
+   * Checks if the status page should exist.
+   *
+   * @return AccessResult
+   */
   public function access() {
     $config = \Drupal::config('nagios.settings');
     return AccessResult::allowedIf($config->get('nagios.statuspage.enabled'));
   }
 
+  /**
+   * For backwards compatibility, this module uses defines to set levels.
+   * This function is called globally in nagios.module.
+   *
+   * @param ImmutableConfig|NULL $config
+   */
   public static function setNagiosStatusConstants(ImmutableConfig $config = NULL) {
-    // Defines to be used by this modules and others that use its hook_nagios()
+    // Defines to be used by this modules and others that use its hook_nagios().
     if (!$config) {
       $config = \Drupal::config('nagios.settings');
     }
     if ($config->get('nagios.status.ok') === NULL) {
-      // should only happen in tests, as the config might not be loaded yet
+      // Should only happen in tests, as the config might not be loaded yet.
       return;
     }
     define('NAGIOS_STATUS_OK', $config->get('nagios.status.ok') /* Default: 0 */);
@@ -191,4 +223,5 @@ class StatuspageController extends ControllerBase {
     define('NAGIOS_STATUS_CRITICAL', $config->get('nagios.status.critical') /* Default: 2 */);
     define('NAGIOS_STATUS_UNKNOWN', $config->get('nagios.status.unknown') /* Default: 3 */);
   }
+
 }

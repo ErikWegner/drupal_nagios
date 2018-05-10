@@ -1,12 +1,12 @@
 <?php
 
-use Drupal\Component\Utility\Unicode;
-use Drupal\update\UpdateManagerInterface;
-
 /**
  * @file
  * Provides drush integration for the Nagios module.
  */
+
+use Drupal\Component\Utility\Unicode;
+use Drupal\update\UpdateManagerInterface;
 
 /**
  * Implements hook_drush_command().
@@ -50,7 +50,7 @@ function drush_nagios_list() {
 /**
  * Drush command callback: nagios-check.
  *
- * @param null|string $check
+ * @param null|string $check function name to execute
  */
 function drush_nagios_check($check = NULL) {
   $moduleHandler = \Drupal::service('module_handler');
@@ -78,8 +78,8 @@ function drush_nagios_check($check = NULL) {
 /**
  * Helper function for drush_nagios_check().
  *
- * @param $module
- * @param $check
+ * @param string $module name
+ * @param string $check function name to execute
  */
 function nagios_check($module, $check) {
   $function = $module . '_nagios_check_' . $check;
@@ -107,12 +107,11 @@ function nagios_check($module, $check) {
  * Drush command callback: nagios-updates.
  *
  * @param string $update_type
- * A string containing:
- * - 'all' to list all updates.
- * - 'security' to list security updates only.
- *
- * @param integer $nagios_flag
- * Send 'nagios' to prefix the output with a Nagios string.
+ *   A string containing:
+ *   - 'all' to list all updates.
+ *   - 'security' to list security updates only.
+ * @param int $nagios_flag
+ *   Send 'nagios' to prefix the output with a Nagios string.
  */
 function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
   $flag_insecure = FALSE;
@@ -150,7 +149,8 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
       if ($nagios_flag == 'nagios') {
         if ($flag_insecure) {
           // Returning the value didn't work in drush 5.x, so we print it instead.
-          $message = 'ADMIN CRITICAL - Updates required for: ' . implode(' ', $module_list);
+          $message = 'ADMIN CRITICAL - Updates required for: ';
+          $message .= implode(' ', $module_list);
           $exit_status = 2;
         }
         else {
@@ -158,14 +158,16 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
             $message = 'ADMIN WARNING - Updates required, but no security updates.';
           }
           else {
-            $message = 'ADMIN WARNING - Updates required for: ' . implode(' ', $module_list);
+            $message = 'ADMIN WARNING - Updates required for: ';
+            $message .= implode(' ', $module_list);
           }
           $exit_status = 1;
         }
       }
       else {
         $message = implode(' ', $module_list);
-        // Set $exit_status to zero so any dependent scripts do not get a false failure.
+        // Set $exit_status to zero so any dependent scripts do not get a
+        // false failure.
         $exit_status = 0;
       }
     }
@@ -183,9 +185,9 @@ function drush_nagios_updates($update_type = NULL, $nagios_flag = NULL) {
 /**
  * Helper function for drush_nagios_updates().
  *
- * @param $data
+ * @param array[]|null $data
  *
- * @return array|null
+ * @return array[]|null keyed by $project_name
  */
 function nagios_updates($data) {
   if (!is_array($data)) {

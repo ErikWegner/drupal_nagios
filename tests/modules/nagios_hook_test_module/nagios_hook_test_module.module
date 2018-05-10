@@ -6,7 +6,7 @@
 function nagios_hook_test_module_nagios_info() {
   return [
     'name' => 'nagios_hook_test_module',
-    'id' => 'nagios_hook_test_module',
+    'id' => 'NAGIOS_HOOK_TEST_MODULE',
   ];
 }
 

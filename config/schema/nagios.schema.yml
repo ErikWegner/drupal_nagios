@@ -1,0 +1,105 @@
+# Schema for the configuration files of the nagios module.
+
+nagios.settings:
+  type: config_object
+  label: 'Nagios settings'
+  mapping:
+    nagios:
+      type: mapping
+      label: 'Nagios'
+      mapping:
+        status:
+            type: mapping
+            label: 'Error levels'
+            mapping:
+                ok:
+                    type: integer
+                    label: 'Status OK'
+                warning:
+                    type: integer
+                    label: 'Status WARNING'
+                critical:
+                    type: integer
+                    label: 'Status CRITICAL'
+                unknown:
+                    type: integer
+                    label: 'STATUS UNKNOWN'
+        min_report_severity:
+          type: integer
+          label: 'Mininum report severity'
+        ua:
+          type: string
+          label: 'Unique ID'
+        statuspage:
+          type: mapping
+          label: 'Status page settings'
+          mapping:
+            path:
+              type: path
+              label: 'Nagios page path'
+            enabled:
+              type: boolean
+              label: 'Enable status page?'
+            controller:
+              type: string
+              label: 'Nagios page controller'
+            getparam:
+              type: boolean
+              label: 'Enable Unique ID checking via URL on status page?'
+        show_outdated_names:
+          type: boolean
+          label: 'Show outdated module/theme name?'
+        limit_watchdog:
+          type: mapping
+          label: 'Watchdog Settings'
+          mapping:
+            display:
+              type: boolean
+              label: 'Limit watchdog display'
+            results:
+              type: integer
+              label: 'Limit watchdog logs'
+        cron_duration:
+          type: integer
+          label: 'Cron duration'
+        elysia_cron_duration:
+          type: integer
+          label: 'Elysia cron duration'
+        enable:
+          type: mapping
+          label: 'Enabled modules'
+          mapping:
+            nagios:
+              type: boolean
+              label: 'Nagios'
+        function:
+          type: mapping
+          label: 'Enabled functions'
+          mapping:
+            requirements:
+              type: boolean
+              label: 'Checking of hook_requirements'
+            watchdog:
+              type: boolean
+              label: 'Check recent watchdog entries'
+            cron:
+              type: boolean
+              label: 'Check whether cron has been running regularly'
+            session_anon:
+              type: boolean
+              label: 'Check the number of anonymous sessions for nagios performance data'
+            session_auth:
+              type: boolean
+              label: 'Check the number of authenticated sessions for nagios performance data'
+            nodes:
+              type: boolean
+              label: 'Check the number of nodes for nagios performance data'
+            users:
+              type: boolean
+              label: 'Check the number of users for nagios performance data'
+            modules:
+              type: boolean
+              label: 'Check the number of modules for nagios performance data'
+            themes:
+              type: boolean
+              label: 'Check the number of themes for nagios performance data'

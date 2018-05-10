@@ -8,7 +8,7 @@ nagios:
   ua: 'Nagios'
   statuspage:
     path: 'nagios'
-    enabled: 0
+    enabled: false
     controller: '\Drupal\nagios\Controller\StatuspageController::content'
     getparam: FALSE
   show_outdated_names: TRUE

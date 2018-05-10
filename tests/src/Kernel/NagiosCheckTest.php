@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\nagios\Tests;
+namespace Drupal\Tests\nagios\Kernel;
 
 use Drupal\Core\Access\AccessResultNeutral;
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;

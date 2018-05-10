@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\nagios\Tests;
+namespace Drupal\Tests\nagios\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\nagios\Controller\StatuspageController;

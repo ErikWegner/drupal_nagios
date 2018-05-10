@@ -4,6 +4,7 @@ namespace Drupal\nagios\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 
 class SettingsForm extends ConfigFormBase {
 
@@ -43,35 +44,49 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('nagios.show_outdated_names'),
     ];
 
+    $aUrlInfo = [
+      ':url' => Url::fromRoute('system.performance_settings')
+        ->toString(),
+    ];
     $form['nagios_status_page'] = [
       '#type' => 'fieldset',
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
       '#title' => $this->t('Status page settings'),
-      '#description' => $this->t('Control the availability and location of the HTTP status page. NOTE: you must clear the menu cache for changes to these settings to register.'),
+      '#description' => $this->t(
+        'Control the availability and location of the HTTP status page. NOTE: you must clear the <a href=":url">menu cache</a> for changes to these settings to register.',
+        $aUrlInfo),
     ];
     $form['nagios_status_page']['nagios_enable_status_page'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable status page'),
       '#default_value' => $config->get('nagios.statuspage.enabled'),
     ];
+    $only_enabled_if_page = ['disabled' => ['#edit-nagios-enable-status-page' => ['checked' => FALSE]]];
     $form['nagios_status_page']['nagios_page_path'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Nagios page path'),
       '#description' => $this->t('Enter the path for the Nagios HTTP status page. It must be a valid Drupal path.'),
       '#default_value' => $config->get('nagios.statuspage.path'),
+      '#states' => $only_enabled_if_page,
     ];
     $form['nagios_status_page']['nagios_page_controller'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Nagios page controller'),
       '#description' => $this->t('Enter the name of the controller and function to be used by the Nagios status page. Take care and be sure this function exists before clearing the menu cache!'),
       '#default_value' => $config->get('nagios.statuspage.controller'),
+      '#states' => $only_enabled_if_page,
     ];
+
     $form['nagios_status_page']['nagios_enable_status_page_get'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Enable Unique ID checking via URL on status page'),
-      '#default_value' => $config->get('nagios.statuspage.getparam'),
-      '#description' => $this->t('If enabled the $_GET variable "unique_id" is used for checking the correct Unique ID instead of "User Agent" ($_SERVER[\'HTTP_USER_AGENT\']). This alternative checking is only working if the URL is containing the value like "/nagios?unique_id=*****". This feature is useful to avoid webserver stats with the Unique ID as "User Agent" and helpful for human testing.'),
+      '#type' => 'radios',
+      '#default_value' => (int) $config->get('nagios.statuspage.getparam'),
+      '#options' => [
+        0 => $this->t('The HTTP User Agent has to be exactly the Unique ID.'),
+        1 => $this->t('Enable Unique ID checking via GET parameter in the URL status page'),
+      ],
+      '#description' => $this->getUserAgentRadioDesc(),
+      '#states' => $only_enabled_if_page,
     ];
 
     $form['nagios_error_levels'] = [
@@ -172,6 +187,24 @@ class SettingsForm extends ConfigFormBase {
   }
 
   /**
+   * Builds the description.
+   *
+   * @return string
+   */
+  private function getUserAgentRadioDesc() {
+    $config = $this->config('nagios.settings');
+    $aUrlInfo = [
+      ':url' => Url::fromRoute(
+        'nagios.statuspage',
+        ['unique_id' => $config->get('nagios.ua')],
+        ['absolute' => TRUE])->toString(),
+    ];
+    return $this->t('If enabled the $_GET variable "unique_id" is used for checking the correct Unique ID instead of "User Agent" ($_SERVER[\'HTTP_USER_AGENT\']).') . ' ' .
+      $this->t('You need to call the following URL from Nagios / Icinga / cURL: <a href=":url">:url</a>.', $aUrlInfo) . ' ' .
+      $this->t('This feature is useful to avoid webserver stats with the Unique ID as "User Agent" and helpful for human testing.');
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -216,4 +249,5 @@ class SettingsForm extends ConfigFormBase {
 
     parent::submitForm($form, $form_state);
   }
+
 }

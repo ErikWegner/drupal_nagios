@@ -75,7 +75,7 @@ class SettingsForm extends ConfigFormBase {
     ];
 
     $form['nagios_error_levels'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
       '#title' => $this->t('Error levels'),

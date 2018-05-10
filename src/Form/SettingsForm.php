@@ -199,6 +199,16 @@ class SettingsForm extends ConfigFormBase {
       $this->t('This feature is useful to avoid webserver stats with the Unique ID as "User Agent" and helpful for human testing.');
   }
 
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $default_ua = $form_state->getValue('nagios_ua') == 'Nagios';
+    if ($default_ua && $form_state->getValue('nagios_enable_status_page')) {
+      $form_state->setErrorByName(
+        'nagios_ua',
+        $this->t('You must change the Unique ID if you make the status page available over HTTP.') . ' ' .
+        t('This step reduces the risk of publically sharing information that might make hacking your site easier.'));
+    }
+  }
+
   /**
    * {@inheritdoc}
    */

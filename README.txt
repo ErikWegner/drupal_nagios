@@ -181,7 +181,7 @@ array(
   'key'  => 'IDENTIFIER',
   'data' => array(
     'status' => STATUS_CODE,
-    'type    => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown) or can be 'perf', which does
+    'type'   => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown) or can be 'perf', which does
                          // Cause an alert, but can be processed later by custom programs
     'text'   => 'Text description for the problem',
   ),

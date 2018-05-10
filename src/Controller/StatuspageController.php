@@ -3,6 +3,7 @@
 namespace Drupal\nagios\Controller;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\update\UpdateManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -176,4 +177,18 @@ class StatuspageController extends ControllerBase {
     return AccessResult::allowedIf($config->get('nagios.statuspage.enabled') === 1);
   }
 
+  public static function setNagiosStatusConstants(ImmutableConfig $config = NULL) {
+    // Defines to be used by this modules and others that use its hook_nagios()
+    if (!$config) {
+      $config = \Drupal::config('nagios.settings');
+    }
+    if ($config->get('nagios.status.ok') === NULL) {
+      // should only happen in tests, as the config might not be loaded yet
+      return;
+    }
+    define('NAGIOS_STATUS_OK', $config->get('nagios.status.ok'));
+    define('NAGIOS_STATUS_UNKNOWN', $config->get('nagios.status.unknown'));
+    define('NAGIOS_STATUS_WARNING', $config->get('nagios.status.warning'));
+    define('NAGIOS_STATUS_CRITICAL', $config->get('nagios.status.critical'));
+  }
 }

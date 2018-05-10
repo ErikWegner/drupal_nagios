@@ -2,19 +2,9 @@
 
 use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\update\UpdateFetcherInterface;
+use \Drupal\nagios\Controller\StatuspageController;
 
-// Copyright 2009 Khalid Baheyeldin http://2bits.com
-// 2015 Erik Wegner
-
-// Defines to be used by this modules and others that use its hook_nagios()
-define('NAGIOS_STATUS_OK', \Drupal::config('nagios.settings')
-  ->get('nagios.status.ok'));
-define('NAGIOS_STATUS_UNKNOWN', \Drupal::config('nagios.settings')
-  ->get('nagios.status.unknown'));
-define('NAGIOS_STATUS_WARNING', \Drupal::config('nagios.settings')
-  ->get('nagios.status.warning'));
-define('NAGIOS_STATUS_CRITICAL', \Drupal::config('nagios.settings')
-  ->get('nagios.status.critical'));
+StatuspageController::setNagiosStatusConstants();
 
 /**
  * Mapping of defines to text strings that Nagios understands

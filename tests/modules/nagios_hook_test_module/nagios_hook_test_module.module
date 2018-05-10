@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * Implements hook_nagios_info().
+ */
+function nagios_hook_test_module_nagios_info() {
+  return [
+    'name' => 'nagios_hook_test_module',
+    'id' => 'nagios_hook_test_module',
+  ];
+}
+
+/**
+ * Implements hook_nagios().
+ */
+function nagios_hook_test_module_nagios() {
+  return [
+    'key' => 'nagios_hook_test_module',
+    'data' => [
+      'status' => 1,
+      'type' => 'state',
+      'text' => 'Text description for the problem',
+    ],
+  ];
+}

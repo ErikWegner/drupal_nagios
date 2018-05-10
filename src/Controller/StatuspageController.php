@@ -59,7 +59,7 @@ class StatuspageController extends ControllerBase {
       }
     }
     else {
-      // This is not an authorized unique id or uer, so just return this default
+      // This is not an authorized unique id or user, so just return this default
       // status.
       $nagios_data = [
         'nagios' => [

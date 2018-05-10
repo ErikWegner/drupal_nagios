@@ -174,7 +174,7 @@ class StatuspageController extends ControllerBase {
 
   public function access() {
     $config = \Drupal::config('nagios.settings');
-    return AccessResult::allowedIf($config->get('nagios.statuspage.enabled') === 1);
+    return AccessResult::allowedIf($config->get('nagios.statuspage.enabled'));
   }
 
   public static function setNagiosStatusConstants(ImmutableConfig $config = NULL) {
@@ -186,9 +186,9 @@ class StatuspageController extends ControllerBase {
       // should only happen in tests, as the config might not be loaded yet
       return;
     }
-    define('NAGIOS_STATUS_OK', $config->get('nagios.status.ok'));
-    define('NAGIOS_STATUS_UNKNOWN', $config->get('nagios.status.unknown'));
-    define('NAGIOS_STATUS_WARNING', $config->get('nagios.status.warning'));
-    define('NAGIOS_STATUS_CRITICAL', $config->get('nagios.status.critical'));
+    define('NAGIOS_STATUS_OK', $config->get('nagios.status.ok') /* Default: 0 */);
+    define('NAGIOS_STATUS_WARNING', $config->get('nagios.status.warning') /* Default: 1 */);
+    define('NAGIOS_STATUS_CRITICAL', $config->get('nagios.status.critical') /* Default: 2 */);
+    define('NAGIOS_STATUS_UNKNOWN', $config->get('nagios.status.unknown') /* Default: 3 */);
   }
 }

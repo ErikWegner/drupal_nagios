@@ -10,7 +10,10 @@ use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\nagios\Controller\StatuspageController;
 use Drupal\update\UpdateFetcherInterface;
 
-StatuspageController::setNagiosStatusConstants();
+if (class_exists(StatuspageController::class)) {
+  // Class won't exist during the installation.
+  StatuspageController::setNagiosStatusConstants();
+}
 
 /**
  * Mapping of defines to text strings that Nagios understands.

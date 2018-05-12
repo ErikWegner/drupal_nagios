@@ -31,13 +31,6 @@ class SettingsForm extends ConfigFormBase {
     $group = 'modules';
     $config = $this->config('nagios.settings');
 
-    $form['nagios_ua'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Unique ID'),
-      '#default_value' => $config->get('nagios.ua'),
-      '#description' => $this->t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.'),
-    ];
-
     $form['nagios_show_outdated_names'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Show outdated module/theme name'),
@@ -61,6 +54,13 @@ class SettingsForm extends ConfigFormBase {
       '#title' => $this->t('Nagios page path'),
       '#description' => $this->t('Enter the path for the Nagios HTTP status page. It must be a valid Drupal path.'),
       '#default_value' => $config->get('nagios.statuspage.path'),
+      '#states' => $only_enabled_if_page,
+    ];
+    $form['nagios_status_page']['nagios_ua'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Unique ID'),
+      '#default_value' => $config->get('nagios.ua'),
+      '#description' => $this->t('Restrict sending information to requests identified by this Unique ID. You should change this to some unique string for your organization, and configure Nagios accordingly. This makes Nagios data less accessible to curious users. See the README.txt for more details.'),
       '#states' => $only_enabled_if_page,
     ];
     $form['nagios_status_page']['nagios_page_controller'] = [

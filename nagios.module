@@ -7,6 +7,7 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\nagios\Controller\StatuspageController;
 use Drupal\update\UpdateFetcherInterface;
 
@@ -504,7 +505,9 @@ function nagios_check_watchdog() {
     // Create error message.
     $message = "$row[type] $row[message]";
     // @TODO Untangle l(truncate_utf8(_dblog_format_message($dblog), 56, TRUE, TRUE), 'admin/reports/event/'. $dblog->wid, array('html' => TRUE)) and use it here
-    $variables = unserialize($row['variables']);
+    $variables = unserialize(
+      $row['variables'],
+      ['allowed_classes' => [TranslatableMarkup::class]]);
     if (is_array($variables)) {
       foreach ($variables as $key => $value) {
         $message = str_replace((string) $key, $value, $message);

@@ -6,7 +6,7 @@
 function nagios_hook_test_module_nagios_info() {
   return [
     'name' => 'nagios_hook_test_module',
-    'id' => 'NAGIOS_HOOK_TEST_MODULE',
+    'id' => 'NAGIOS_CHECK_KEY',
   ];
 }
 
@@ -15,8 +15,7 @@ function nagios_hook_test_module_nagios_info() {
  */
 function nagios_hook_test_module_nagios() {
   return [
-    'key' => 'nagios_hook_test_module',
-    'data' => [
+    'NAGIOS_CHECK_KEY' => [
       'status' => 1,
       'type' => 'state',
       'text' => 'Text description for the problem',

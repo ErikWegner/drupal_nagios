@@ -48,7 +48,7 @@ class CustomHookCheckTest extends KernelTestBase {
       'type' => 'state',
       'text' => 'Text description for the problem',
     ];
-    self::assertSame($expected, $results["nagios_hook_test_module"]['data']);
+    self::assertSame($expected, $results["nagios_hook_test_module"]['NAGIOS_CHECK_KEY']);
   }
 }
 

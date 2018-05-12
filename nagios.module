@@ -324,10 +324,13 @@ function nagios_check_requirements() {
             }
           }
         }
+
         // Sort our finished array by severity so we can set Nagios status accordingly.
-        usort($module_data, '_nagios_updates_sort_by_severity');
-        // Add the 'worst case' to requirements.
-        $requirements_data['update_contrib'] = array_pop($module_data);
+        if (!empty($module_data)) {
+          usort($module_data, '_nagios_updates_sort_by_severity');
+          // Add the 'worst case' to requirements.
+          $requirements_data['update_contrib'] = array_pop($module_data);
+        }
       }
       $reqs += $requirements_data;
     }

@@ -1,19 +1,19 @@
 nagios:
-    status:
-        ok: 0
-        warning: 1
-        critical: 2
-        unknown: 3
-    min_report_severity: 1
-    ua: 'Nagios'
-    statuspage:
-        path: 'nagios'
-        enabled: false
-        controller: '\Drupal\nagios\Controller\StatuspageController::content'
-        getparam: false
-    show_outdated_names: true
-    limit_watchdog:
-        display: false
-        results: 50
-    cron_duration: 60
-    elysia_cron_duration: 60
+  status:
+    ok: 0
+    warning: 1
+    critical: 2
+    unknown: 3
+  min_report_severity: 1
+  ua: 'Nagios'
+  statuspage:
+    path: 'nagios'
+    enabled: false
+    controller: '\Drupal\nagios\Controller\StatuspageController::content'
+    getparam: FALSE
+  show_outdated_names: TRUE
+  limit_watchdog:
+    display: FALSE
+    results: 50
+  cron_duration: 60
+  elysia_cron_duration: 60

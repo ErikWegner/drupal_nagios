@@ -1,0 +1,6 @@
+name: nagios_hook_test_module
+type: module
+core: 8.x
+package: Custom
+dependencies:
+  - nagios

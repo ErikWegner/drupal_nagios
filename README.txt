@@ -4,11 +4,13 @@ Copyright 2009 Khalid Baheyeldin http://2bits.com
 Description
 -----------
 The Nagios monitoring module intergrates your Drupal site with with the Nagios.
+Nagios' successors, Icinga and Icinga 2 can also be used with this module.
 
 Nagios is a network and host monitoring application. For more information about
 Nagios, see http://www.nagios.org
 
-The module reports to Nagios that the site is up and running normally, including:
+The module reports to Nagios that the site is up and running normally,
+including:
 - PHP is parsing scripts and modules correctly
 - The database is accessible from Drupal
 - Whether there are configuration issues with the site, such as:
@@ -18,22 +20,22 @@ The module reports to Nagios that the site is up and running normally, including
   * Pending updates to the database schema
   * Cron not running for a specified period
 
-If you already use Nagios in your organization to monitor your infrastructure, then
-this module will be useful for you. If you only run one or two Drupal sites, Nagios
-may be overkill for this task.
+If you already use Nagios in your organization to monitor your infrastructure,
+then this module will be useful for you. If you only run one or two Drupal
+sites, Nagios may be overkill for this task.
 
 Security Note
 -------------
 
-This module exposes the following information from your web site:
+This module optionally exposes the following information from your web site:
 - The number of published nodes.
 - The number of active users.
-- Whether an action requiring the administrator's attention (e.g pending module updates,
-  unreadable 'files' directory, ...etc.)
+- Whether an action requiring the administrator's attention (e.g pending module
+  updates, unreadable 'files' directory, ...etc.)
 
-To mitigate the security risks involve, make sure you use a unique ID. However, this is
-not a fool proof solution. If you are concerned about this information being publicly
-accessible, then don't use this module.
+To mitigate the security risks involve, make sure you use a unique ID. However,
+this is not a fool-proof solution. If you are concerned about this information
+being publicly accessible, then don't use this module.
 
 Installation
 ------------
@@ -61,15 +63,15 @@ To enable this module do the following:
 Configuration for Nagios
 ------------------------
 
-The exact way to configure Nagios depends on several factors, e.g. how many Drupal
-sites you want to monitor, the way Nagios is setup, ...etc.
+The exact way to configure Nagios depends on several factors, e.g. how many
+Drupal sites you want to monitor, the way Nagios is setup, ...etc.
 
-The following way is just one of many ways to configure Nagios for Drupal. There are
-certainly other ways to do it, but it all centers on using the check_drupal command
-being run for each site.
+The following way is just one of many ways to configure Nagios for Drupal. There
+are certainly other ways to do it, but it all centers on using the check_drupal
+command being run for each site.
 
-1. Copy the check_drupal script in the nagios-plugin directory to your Nagios plugins
-   directory (e.g. /usr/lib/nagios/plugins).
+1. Copy the check_drupal script in the nagios-plugin directory to your Nagios
+   plugins directory (e.g. /usr/lib/nagios/plugins).
 
 2. Change the commands.cfg file for Nagios to include the following:
 
@@ -126,10 +128,11 @@ Here is an explanation of some of the options:
 
 -U "unique_id"
   This parameter is required.
-  It is a unique identifier that is send as the user agent from the Nagios check_drupal script,
-  and has to match what the Drupal Nagios module has configured.  Both sides have to match,
-  otherwise, you will get "unauthorized" errors. The best way is to generate an MD5 or SHA1
-  string from a combination of data, such as date, city, company name, ...etc. For example:
+  It is a unique identifier that is send as the user agent from the Nagios
+  check_drupal script, and has to match what the Drupal Nagios module has
+  configured.  Both sides have to match, otherwise, you will get "unauthorized"
+  errors. The best way is to generate an MD5 or SHA1 string from a combination
+  of data, such as date, city, company name, ...etc. For example:
 
   $ echo "2003-Jan-17 Waterloo, Canada Honda" | md5sum
 
@@ -137,19 +140,20 @@ Here is an explanation of some of the options:
 
   645666c39f06514528987278c4071d85  -
 
-  The resulting hash is hard enough to deduce, and gives a first level protection against snooping.
+  The resulting hash is hard enough to deduce, and gives a first level
+  protection against snooping.
 
 -t 2
   This parameter is optional.
-  This means that if the Drupal site does not respond in 2 seconds, an error will be reported
-  by Nagios. Increase this value if you site is really slow.
+  This means that if the Drupal site does not respond in 2 seconds, an error
+  will be reported by Nagios. Increase this value if you site is really slow.
   The default is 2 seconds.
 
 -P nagios
   This parameter is optional.
-  For a normal site where Drupal is installed in the web server's DocumentRoot, leave this unchanged.
-  If you installed Drupal in a subdirectory, then change nagios to sub_directory/nagios
-  The default is the path nagios.
+  For a normal site where Drupal is installed in the web server's DocumentRoot,
+  leave this unchanged. If you installed Drupal in a subdirectory, then change
+  nagios to sub_directory/nagios. The default is the path nagios.
 
 API
 ---
@@ -159,8 +163,8 @@ Your module should implement the following hooks:
 
 hook_nagios_info()
 ------------------
-This hook is used to provide a way to enabled/disable a certain module from being included in Nagios
-reports and alerts.
+This hook is used to provide a way to enabled/disable a certain module from
+being included in Nagios reports and alerts.
 
 function yourmodule_nagios_info() {
   return array(
@@ -171,8 +175,8 @@ function yourmodule_nagios_info() {
 
 hook_nagios()
 -------------
-Your module should have a yourmodule_nagios() function that does the actual work of checking something
-and reporting back a status and some info.
+Your module should have a yourmodule_nagios() function that does the actual work
+of checking something and reporting back a status and some info.
 
 The data returned is an associative array as follows:
 
@@ -180,8 +184,9 @@ array(
   'key'  => 'IDENTIFIER',
   'data' => array(
     'status' => STATUS_CODE,
-    'type    => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown) or can be 'perf', which does
-                         // Cause an alert, but can be processed later by custom programs
+    'type'   => 'state', // Can be a 'state' for OK, Warning, Critical, Unknown)
+                         // or can be 'perf', which does cause an alert, but
+                         // can be processed later by custom programs.
     'text'   => 'Text description for the problem',
   ),
 );
@@ -216,31 +221,30 @@ function yourmodule_nagios() {
   }
 
   return array(
-    'key' => 'IDENTIFIER', // This identifier will appear on Nagios' monitoring pages and alerts.
+    'key' => 'IDENTIFIER', // This identifier will appear on Nagios' monitoring
+                           // pages and alerts.
     'data' => $data,
   );
 }
 
-For a real life example on how to use this API, check the performance.module in the devel project
-at http://drupal.org/project/devel
+For a real life example on how to use this API, check the performance.module in
+the devel project at http://drupal.org/project/devel
 
 hook_nagios_settings()
 ----------------------
-This hook provides standard form API elements to be included at admin/settings/nagios. You can
-set any thresholds you want in this hook.
+This hook provides standard form API elements to be included at
+admin/settings/nagios. You can set any thresholds you want in this hook.
 
 Bugs/Features/Patches:
 ----------------------
 If you want to report bugs, feature requests, or submit a patch, please do so
 at the project page on the Drupal web site.
 
-Author
-------
+Authors
+-------
 Khalid Baheyeldin (http://baheyeldin.com/khalid and http://2bits.com)
+Greg Harvey (http://www.codeenigma.com)
+Christian Bläul (https://www.linkedin.com/in/blaeul)
 
-If you use this module, find it useful, and want to send the author
-a thank you note, then use the Feedback/Contact page at the URL above.
-
-The author can also be contacted for paid customizations of this
+The authors can also be contacted for paid customizations of this
 and other modules.
-

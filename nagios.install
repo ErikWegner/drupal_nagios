@@ -1,8 +1,0 @@
-<?php
-
-// Copyright 2009 Khalid Baheyeldin http://2bits.com
-
-function nagios_uninstall() {
-  /*variable_del('nagios_updates');
-  variable_del('nagios_ua');*/
-}
